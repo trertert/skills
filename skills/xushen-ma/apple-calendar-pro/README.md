@@ -1,6 +1,6 @@
 # apple-calendar-pro
 
-Manage Apple Calendar from macOS and Linux.
+Manage Apple Calendar from macOS and Linux (and Windows with env/keyring auth).
 
 Connects to iCloud Calendar over CalDAV (RFC 4791) with iPhone-compatible attachment support (RFC 8607).
 
@@ -11,6 +11,7 @@ Connects to iCloud Calendar over CalDAV (RFC 4791) with iPhone-compatible attach
 - An iCloud account with Calendar enabled
 - Python 3.9+
 - The `requests` library
+- Optional: `keyring` for secure credential lookup on Linux/Windows/macOS
 
 ---
 
@@ -19,6 +20,8 @@ Connects to iCloud Calendar over CalDAV (RFC 4791) with iPhone-compatible attach
 ### 1. Install the dependency
 ```bash
 pip3 install requests
+# optional (recommended off-macOS):
+pip3 install keyring
 ```
 
 ### 2. Generate an app-specific password
@@ -32,7 +35,17 @@ export APPLECAL_PASSWORD="your-app-specific-password"
 ```
 Add to your shell profile (`.zshrc`, `.bashrc`, etc.) to persist across sessions.
 
-**Option B — macOS Keychain** *(macOS only)*
+**Option B — Python keyring** *(Linux/Windows/macOS)*
+```bash
+python3 - <<'PY'
+import keyring
+keyring.set_password('caldav.icloud.com', 'your@icloud.com', 'your-app-specific-password')
+print('saved')
+PY
+```
+Used automatically when `APPLECAL_PASSWORD` is not set and keyring is available.
+
+**Option C — macOS Keychain** *(macOS only)*
 ```bash
 security add-internet-password \
   -s "caldav.icloud.com" \
@@ -105,6 +118,15 @@ python3 scripts/applecal.py --apple-id your@icloud.com events update \
   --location "New Location"
 ```
 
+Clear optional fields explicitly:
+```bash
+python3 scripts/applecal.py --apple-id your@icloud.com events update \
+  --calendar Family \
+  --uid "YOUR-EVENT-UID" \
+  --clear-location \
+  --clear-description
+```
+
 ### Delete an event
 ```bash
 python3 scripts/applecal.py --apple-id your@icloud.com events delete \
@@ -155,7 +177,10 @@ python3 scripts/applecal.py --apple-id your@icloud.com --json-indent 2 events li
 
 - **Birthdays calendar:** Not accessible via CalDAV. Add birthdays as recurring events in a regular calendar for agent visibility.
 - **Free/busy:** Uses CalDAV freebusy where supported; falls back to event-derived calculation if the server returns 400/403.
+- **Event updates:** `events update` now patches only mutable VEVENT fields (`DTSTART/DTEND/DTSTAMP/SUMMARY/LOCATION/DESCRIPTION`) and preserves recurrence, alarms, attachments, and other existing properties.
+- **Clear semantics:** Use `--clear-location` / `--clear-description` to remove those fields; these flags are mutually exclusive with `--location` / `--description`.
 - **Apple ID:** Your iCloud login email — could be `yourname@icloud.com` or another address linked to your Apple account.
+- **Attachment security:** `attach add` enforces extension allowlisting, sensitive-path blocking, and optional directory scoping via `APPLECAL_ATTACH_DIR`.
 
 ---
 

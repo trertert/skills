@@ -1,6 +1,6 @@
 ---
 name: apple-calendar-pro
-description: iCloud Calendar skill via CalDAV (RFC 4791) — works on macOS and Linux. Supports event CRUD, multi-calendar queries, managed attachments (RFC 8607), and free/busy lookups.
+description: iCloud Calendar skill via CalDAV (RFC 4791) — works on macOS/Linux, and Windows with env/keyring auth. Supports event CRUD, multi-calendar queries, managed attachments (RFC 8607), and free/busy lookups.
 homepage: https://github.com/xushen-ma/apple-calendar-pro
 metadata: {"openclaw":{"requires":{"bins":["python3"],"env":["APPLECAL_PASSWORD"]},"primaryEnv":"APPLECAL_PASSWORD"}}
 ---
@@ -62,5 +62,7 @@ python3 scripts/applecal.py freebusy \
 
 ## Notes
 - **Birthdays**: The virtual "Birthdays" calendar is not searchable via CalDAV. Key birthdays should be added as physical recurring events in the **Family** calendar for agent visibility.
-- **Auth**: Set `APPLECAL_PASSWORD` env var (cross-platform), or use macOS Keychain as fallback. Run `doctor` to verify connectivity.
+- **Auth**: Resolution order is `APPLECAL_PASSWORD` → Python `keyring` (if installed/configured) → macOS Keychain fallback. Run `doctor` to verify connectivity.
+- **Event update clearing**: Use `events update --clear-location` / `--clear-description` to explicitly remove optional fields.
+- **Attachment safety**: `attach add` blocks sensitive paths/names, allowlists file extensions, and supports optional directory scoping via `APPLECAL_ATTACH_DIR`.
 - **Apple ID**: Always pass `--apple-id your@icloud.com` (the iCloud account email, not necessarily your Apple ID login).

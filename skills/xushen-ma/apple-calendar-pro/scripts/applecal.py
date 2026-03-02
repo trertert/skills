@@ -32,7 +32,7 @@ import xml.etree.ElementTree as ET
 from datetime import datetime, timedelta, timezone
 from pathlib import Path
 from typing import Optional
-from urllib.parse import urljoin, urlparse
+from urllib.parse import quote, urljoin, urlparse
 
 try:
     import requests
@@ -43,9 +43,33 @@ except ImportError:
     print(json.dumps({"error": "Missing dependency: requests. Run 'pip3 install requests'"}))
     sys.exit(1)
 
-__version__ = "1.1.0"
-PRODID = "-//OpenClaw//AppleCalPro 1.1//EN"
+__version__ = "1.1.1"
+PRODID = "-//OpenClaw//AppleCalPro 1.1.1//EN"
 UID_SAFE_RE = re.compile(r"^[A-Za-z0-9._@:+-]{1,255}$")
+MANAGED_ID_SAFE_RE = re.compile(r"^[A-Za-z0-9._:+-]{1,255}$")
+
+ALLOWED_ATTACHMENT_EXTENSIONS = {
+    ".pdf", ".txt", ".md", ".csv", ".tsv", ".json",
+    ".doc", ".docx", ".xls", ".xlsx", ".ppt", ".pptx",
+    ".rtf", ".odt", ".ods", ".odp",
+    ".png", ".jpg", ".jpeg", ".gif", ".webp", ".heic", ".heif",
+    ".mp3", ".wav", ".m4a", ".mp4", ".mov",
+    ".zip",
+}
+
+SENSITIVE_DIR_SEGMENTS = {
+    ".ssh", ".gnupg", ".aws", ".azure", ".kube", ".config", "keychains",
+}
+
+SENSITIVE_NAME_PATTERNS = [
+    r"^\.env($|\.)",
+    r"(^|[_\-.])credentials?([_\-.]|$)",
+    r"(^|[_\-.])secret(s)?([_\-.]|$)",
+    r"(^|[_\-.])token(s)?([_\-.]|$)",
+    r"(^|[_\-.])keychain([_\-.]|$)",
+    r"^id_(rsa|ed25519|ecdsa)(\.pub)?$",
+    r"\.(pem|key|p12|pfx|p8)$",
+]
 
 # --- Logging ---
 logger = logging.getLogger("applecal")
@@ -95,6 +119,13 @@ def validate_uid(uid: str) -> str:
     return clean
 
 
+def validate_managed_id(managed_id: str) -> str:
+    clean = require_non_empty(managed_id, "managed-id")
+    if not MANAGED_ID_SAFE_RE.fullmatch(clean):
+        raise ValueError("Invalid managed-id format")
+    return clean
+
+
 def validate_time_range(start_value: str, end_value: str, *, all_day: bool = False) -> None:
     if all_day:
         start_date = datetime.strptime(iso_to_caldav_date(start_value), "%Y%m%d")
@@ -124,7 +155,7 @@ def escape_ical_text(value: Optional[str]) -> str:
 def unescape_ical_text(value: Optional[str]) -> Optional[str]:
     if value is None:
         return None
-    return re.sub(r"\\([\\;,])", r"\1", value.replace("\\n", "\n"))
+    return re.sub(r"\\([\\;,])", r"\1", value.replace("\\n", "\n").replace("\\N", "\n"))
 
 
 def fold_ical_line(line: str, limit: int = 75) -> list[str]:
@@ -161,6 +192,51 @@ def build_ical_text(lines: list[str]) -> str:
     return "\r\n".join(folded) + "\r\n"
 
 
+def build_content_disposition_filename(filename: str) -> str:
+    """Build a safe Content-Disposition value supporting non-ASCII filenames."""
+    clean = filename.replace("\r", "_").replace("\n", "_").replace('"', "'").strip() or "attachment"
+    encoded = quote(clean, safe="")
+    return f"attachment; filename=\"{clean}\"; filename*=UTF-8''{encoded}"
+
+
+def resolve_attachment_path(file_path: str) -> Path:
+    """Resolve and validate attachment path against extension, sensitivity, and optional base-dir rules."""
+    clean_path = require_non_empty(file_path, "file")
+    try:
+        path = Path(clean_path).expanduser().resolve(strict=True)
+    except FileNotFoundError:
+        raise ValueError(f"Attachment file not found: {clean_path}")
+
+    if not path.is_file():
+        raise ValueError(f"Attachment file not found: {clean_path}")
+
+    suffix = path.suffix.lower()
+    if suffix not in ALLOWED_ATTACHMENT_EXTENSIONS:
+        allowed = ", ".join(sorted(ALLOWED_ATTACHMENT_EXTENSIONS))
+        raise ValueError(f"Blocked attachment type '{suffix or '[none]'}'. Allowed extensions: {allowed}")
+
+    lowered_parts = {part.lower() for part in path.parts}
+    if lowered_parts & SENSITIVE_DIR_SEGMENTS:
+        raise ValueError("Blocked sensitive file path")
+
+    name = path.name.lower()
+    if any(re.search(pattern, name) for pattern in SENSITIVE_NAME_PATTERNS):
+        raise ValueError("Blocked sensitive file name")
+
+    safe_root_raw = os.environ.get("APPLECAL_ATTACH_DIR", "").strip()
+    if safe_root_raw:
+        try:
+            safe_root = Path(safe_root_raw).expanduser().resolve(strict=True)
+        except FileNotFoundError:
+            raise ValueError("APPLECAL_ATTACH_DIR does not exist")
+        try:
+            path.relative_to(safe_root)
+        except ValueError:
+            raise ValueError(f"Attachment must be inside APPLECAL_ATTACH_DIR: {safe_root}")
+
+    return path
+
+
 def get_keychain_password(server: str, account: str) -> str:
     """Retrieve iCloud CalDAV password.
 
@@ -180,18 +256,34 @@ def get_keychain_password(server: str, account: str) -> str:
         logger.debug("Auth: using APPLECAL_PASSWORD environment variable")
         return env_password
 
-    # 2. Fall back to macOS Keychain
+    # 2. Optional keyring backend (Linux/Windows/macOS)
+    try:
+        import keyring  # type: ignore
+
+        keyring_password = keyring.get_password(server, account)
+        if keyring_password:
+            logger.debug("Auth: using keyring backend")
+            return keyring_password.strip()
+    except Exception:
+        # keyring is optional; continue to platform-specific fallback
+        pass
+
+    # 3. Fall back to macOS Keychain
     if sys.platform != "darwin":
         raise RuntimeError(
-            "No password found. On non-macOS platforms, set the APPLECAL_PASSWORD environment variable:\n"
+            "No password found. Set APPLECAL_PASSWORD (recommended), or install/configure python keyring.\n"
             "  export APPLECAL_PASSWORD='your-app-specific-password'\n"
             "Generate an app-specific password at: https://appleid.apple.com"
         )
 
-    result = subprocess.run(
-        ["security", "find-internet-password", "-s", server, "-a", account, "-w"],
-        capture_output=True, text=True
-    )
+    try:
+        result = subprocess.run(
+            ["security", "find-internet-password", "-s", server, "-a", account, "-w"],
+            capture_output=True, text=True, timeout=10
+        )
+    except subprocess.TimeoutExpired as exc:
+        raise RuntimeError("Timed out while reading password from macOS Keychain") from exc
+
     if result.returncode != 0:
         raise RuntimeError(
             f"Keychain entry not found for {account}@{server}.\n"
@@ -211,9 +303,12 @@ def parse_xml(text):
         raise ValueError(f"Invalid XML response from CalDAV server: {e}") from e
 
 def get_href(element):
-    if element is None: return None
+    if element is None:
+        return None
     h = element.find(".//{DAV:}href")
-    return h.text if h is not None else None
+    if h is None or not h.text:
+        return None
+    return h.text.strip()
 
 def iso_to_caldav(iso_str):
     """Convert ISO 8601 to CalDAV UTC format YYYYMMDDTHHMMSSZ."""
@@ -387,10 +482,13 @@ class AppleCalClient:
         self.session.auth = HTTPBasicAuth(self.apple_id, self.password)
         self.session.headers.update({"User-Agent": user_agent, "Content-Type": "application/xml"})
 
-        # Retry on transient network errors (not on 4xx/5xx — those are app errors)
-        retry = Retry(total=MAX_RETRIES, backoff_factor=0.5,
-                      status_forcelist=[500, 502, 503, 504],
-                      allowed_methods=["GET", "PUT", "DELETE", "PROPFIND", "REPORT", "POST"])
+        # Retry on transient network errors (prefer idempotent methods to avoid duplicate writes)
+        retry = Retry(
+            total=MAX_RETRIES,
+            backoff_factor=0.5,
+            status_forcelist=[500, 502, 503, 504],
+            allowed_methods=["GET", "HEAD", "OPTIONS", "PROPFIND", "REPORT"],
+        )
         adapter = HTTPAdapter(max_retries=retry)
         self.session.mount("https://", adapter)
         self.session.mount("http://", adapter)
@@ -416,6 +514,8 @@ class AppleCalClient:
         resp.raise_for_status()
         root = parse_xml(resp.text)
         href = get_href(root)
+        if not href:
+            raise RuntimeError("Discovery failed: missing current-user-principal href")
         parsed = urlparse(resp.url)
         server_root = f"{parsed.scheme}://{parsed.netloc}"
         self.principal_url = href if href.startswith("http") else urljoin(server_root, href)
@@ -436,6 +536,8 @@ class AppleCalClient:
         # Home
         home_el = root.find(".//{urn:ietf:params:xml:ns:caldav}calendar-home-set")
         home_href = get_href(home_el)
+        if not home_href:
+            raise RuntimeError("Discovery failed: missing calendar-home-set href")
         self.home_url = home_href if home_href.startswith("http") else urljoin(server_root, home_href)
         
         # Outbox
@@ -520,6 +622,12 @@ class AppleCalClient:
                 or q in (e.get("description") or "").lower()
             ]
 
+        events.sort(key=lambda e: (e.get("start") or "", e.get("uid") or ""))
+        if max_items is not None:
+            if max_items < 0:
+                raise ValueError("--max must be >= 0")
+            events = events[:max_items]
+
         return events
 
     def list_events_multi(self, calendar_names, start_iso, end_iso, query=None, max_items=None):
@@ -530,7 +638,8 @@ class AppleCalClient:
         for cal_name in calendar_names:
             try:
                 cal_url = self.get_calendar_url(cal_name)
-                events = self.list_events(cal_url, start_iso, end_iso, query=query)
+                per_calendar_max = max_items if len(calendar_names) == 1 else None
+                events = self.list_events(cal_url, start_iso, end_iso, query=query, max_items=per_calendar_max)
                 for e in events:
                     e["calendar"] = cal_name
                 combined_events.extend(events)
@@ -646,19 +755,34 @@ class AppleCalClient:
             f"DTSTAMP:{stamp}",
             start_line,
             end_line,
-            f"SUMMARY:{summary}"
+            f"SUMMARY:{escape_ical_text(summary)}"
         ]
-        if location: ics.append(f"LOCATION:{location}")
-        if description: ics.append(f"DESCRIPTION:{description}")
+        if location:
+            ics.append(f"LOCATION:{escape_ical_text(location)}")
+        if description:
+            ics.append(f"DESCRIPTION:{escape_ical_text(description)}")
         ics.extend(["END:VEVENT", "END:VCALENDAR"])
         
-        ics_text = "\r\n".join(ics)
+        ics_text = build_ical_text(ics)
         event_url = urljoin(calendar_url, f"{uid}.ics")
         resp = self._request("PUT", event_url, data=ics_text, headers={"Content-Type": "text/calendar; charset=utf-8"})
         resp.raise_for_status()
         return {"uid": uid, "url": event_url, "status": "created"}
 
-    def update_event(self, calendar_url, uid, summary=None, start_iso=None, end_iso=None, location=None, description=None, all_day=None, ics_body=None):
+    def update_event(
+        self,
+        calendar_url,
+        uid,
+        summary=None,
+        start_iso=None,
+        end_iso=None,
+        location=None,
+        description=None,
+        all_day=None,
+        clear_location=False,
+        clear_description=False,
+        ics_body=None,
+    ):
         event = self.get_event(calendar_url, uid)
         if not event: raise ValueError(f"Event {uid} not found.")
 
@@ -674,8 +798,13 @@ class AppleCalClient:
             current_end = parsed_event.get("end")
             new_start_input = start_iso if start_iso is not None else current_start
             new_end_input = end_iso if end_iso is not None else current_end
-            new_loc = location if location is not None else parsed.get("LOCATION")
-            new_desc = description if description is not None else parsed.get("DESCRIPTION")
+            if clear_location and location is not None:
+                raise ValueError("Use either --location or --clear-location, not both")
+            if clear_description and description is not None:
+                raise ValueError("Use either --description or --clear-description, not both")
+
+            new_loc = None if clear_location else (location if location is not None else parsed.get("LOCATION"))
+            new_desc = None if clear_description else (description if description is not None else parsed.get("DESCRIPTION"))
             new_all_day = parsed_event.get("all_day", False) if all_day is None else all_day
 
             if not new_start_input or not new_end_input:
@@ -684,35 +813,47 @@ class AppleCalClient:
             start_line, end_line = self._build_dt_fields(new_start_input, new_end_input, all_day=new_all_day)
             stamp = datetime.now(timezone.utc).strftime("%Y%m%dT%H%M%SZ")
 
-            ics = [
-                "BEGIN:VCALENDAR",
-                "VERSION:2.0",
-                f"PRODID:{PRODID}",
-                "BEGIN:VEVENT",
-                f"UID:{uid}",
-                f"DTSTAMP:{stamp}",
-                start_line,
-                end_line,
-                f"SUMMARY:{new_summary}"
-            ]
-            if new_loc: ics.append(f"LOCATION:{new_loc}")
-            if new_desc: ics.append(f"DESCRIPTION:{new_desc}")
-            
-            # Preserve existing attachments
-            lines = []
-            current_line = ""
-            for line in ics_text.splitlines():
-                if line.startswith(" ") or line.startswith("\t"):
-                    current_line += line[1:]
-                else:
-                    if current_line.startswith("ATTACH"):
-                        ics.append(current_line)
-                    current_line = line
-            if current_line.startswith("ATTACH"):
-                ics.append(current_line)
+            # Preserve VEVENT properties by patching only mutable fields.
+            # This keeps RRULE/EXDATE/VALARM/ATTACH/CLASS/TRANSP/custom properties intact.
+            updated_lines = []
+            in_vevent = False
+            replaced_fields_inserted = False
+            replaceable_prefixes = ("DTSTART", "DTEND", "DTSTAMP", "SUMMARY", "LOCATION", "DESCRIPTION")
 
-            ics.extend(["END:VEVENT", "END:VCALENDAR"])
-            new_ics_text = build_ical_text(ics)
+            def _insert_replaced_fields(target_lines):
+                target_lines.append(f"DTSTAMP:{stamp}")
+                target_lines.append(start_line)
+                target_lines.append(end_line)
+                target_lines.append(f"SUMMARY:{escape_ical_text(new_summary)}")
+                if new_loc:
+                    target_lines.append(f"LOCATION:{escape_ical_text(new_loc)}")
+                if new_desc:
+                    target_lines.append(f"DESCRIPTION:{escape_ical_text(new_desc)}")
+
+            for line in unfold_ics_lines(ics_text):
+                if line == "BEGIN:VEVENT":
+                    in_vevent = True
+                    replaced_fields_inserted = False
+                    updated_lines.append(line)
+                    _insert_replaced_fields(updated_lines)
+                    replaced_fields_inserted = True
+                    continue
+
+                if line == "END:VEVENT":
+                    if in_vevent and not replaced_fields_inserted:
+                        _insert_replaced_fields(updated_lines)
+                    in_vevent = False
+                    updated_lines.append(line)
+                    continue
+
+                if in_vevent:
+                    prop_name = line.split(":", 1)[0].split(";", 1)[0].upper()
+                    if prop_name.startswith(replaceable_prefixes):
+                        continue
+
+                updated_lines.append(line)
+
+            new_ics_text = build_ical_text(updated_lines)
 
         headers = {"Content-Type": "text/calendar; charset=utf-8"}
         if event["etag"]:
@@ -884,10 +1025,7 @@ class AppleCalClient:
         event = self.get_event(calendar_url, uid)
         if not event: raise ValueError(f"Event {uid} not found.")
         
-        clean_path = require_non_empty(file_path, "file")
-        path = Path(clean_path).expanduser()
-        if not path.exists() or not path.is_file():
-            raise ValueError(f"Attachment file not found: {clean_path}")
+        path = resolve_attachment_path(file_path)
         mime, _ = mimetypes.guess_type(str(path))
         mime = mime or "application/octet-stream"
         
@@ -895,7 +1033,7 @@ class AppleCalClient:
         with open(path, "rb") as f:
             headers = {
                 "Content-Type": mime,
-                "Content-Disposition": f'attachment; filename="{path.name}"',
+                "Content-Disposition": build_content_disposition_filename(path.name),
                 "Prefer": "return=representation"
             }
             resp = self._request("POST", upload_url, data=f, headers=headers)
@@ -1036,6 +1174,8 @@ def main():
     ev_update.add_argument("--end")
     ev_update.add_argument("--location")
     ev_update.add_argument("--description")
+    ev_update.add_argument("--clear-location", action="store_true", help="Remove LOCATION from the event")
+    ev_update.add_argument("--clear-description", action="store_true", help="Remove DESCRIPTION from the event")
     ev_update.add_argument("--all-day", action="store_true")
 
     # events delete
@@ -1104,7 +1244,20 @@ def main():
                 args.summary = require_non_empty(args.summary, "summary")
                 validate_time_range(args.start, args.end, all_day=args.all_day)
             elif args.subcommand == "update":
-                if not any([args.summary, args.start, args.end, args.location, args.description, args.all_day]):
+                if args.location is not None and args.clear_location:
+                    raise ValueError("Use either --location or --clear-location, not both")
+                if args.description is not None and args.clear_description:
+                    raise ValueError("Use either --description or --clear-description, not both")
+                if not any([
+                    args.summary,
+                    args.start,
+                    args.end,
+                    args.location,
+                    args.description,
+                    args.all_day,
+                    args.clear_location,
+                    args.clear_description,
+                ]):
                     raise ValueError("events update requires at least one field to modify")
                 if args.start and args.end:
                     validate_time_range(args.start, args.end, all_day=args.all_day)
@@ -1123,7 +1276,7 @@ def main():
             args.uid = validate_uid(args.uid)
             args.calendar = require_non_empty(args.calendar, "calendar")
             if args.subcommand == "remove":
-                args.managed_id = require_non_empty(args.managed_id, "managed-id")
+                args.managed_id = validate_managed_id(args.managed_id)
             elif args.subcommand == "add":
                 args.file = require_non_empty(args.file, "file")
 
@@ -1148,7 +1301,18 @@ def main():
                 if args.subcommand == "create":
                     result = client.create_event(url, args.summary, args.start, args.end, args.location, args.description, all_day=args.all_day)
                 elif args.subcommand == "update":
-                    result = client.update_event(url, args.uid, args.summary, args.start, args.end, args.location, args.description, all_day=True if args.all_day else None)
+                    result = client.update_event(
+                        url,
+                        args.uid,
+                        args.summary,
+                        args.start,
+                        args.end,
+                        args.location,
+                        args.description,
+                        all_day=True if args.all_day else None,
+                        clear_location=args.clear_location,
+                        clear_description=args.clear_description,
+                    )
                 elif args.subcommand == "delete":
                     result = client.delete_event(url, args.uid)
 
