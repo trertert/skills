@@ -1,10 +1,30 @@
 ---
 name: consensus-persona-respawn
 description: Ledger-informed persona lifecycle management. Replaces low-performing personas with successor personas derived from mistake patterns in board decision history, preserving adaptive governance over long-running automation. Reputation updates are computed by consensus-persona-engine.
+version: 1.1.13
 homepage: https://github.com/kaicianflone/consensus-persona-respawn
 source: https://github.com/kaicianflone/consensus-persona-respawn
+upstream:
+  consensus-guard-core: https://github.com/kaicianflone/consensus-guard-core
+requires:
+  bins:
+    - node
+    - tsx
+  env:
+    - CONSENSUS_STATE_FILE
+    - CONSENSUS_STATE_ROOT
 metadata:
-  {"openclaw": {"requires": {"bins": ["node", "tsx"]}}}
+  openclaw:
+    requires:
+      bins:
+        - node
+        - tsx
+      env:
+        - CONSENSUS_STATE_FILE
+        - CONSENSUS_STATE_ROOT
+    install:
+      - kind: node
+        package: consensus-persona-respawn
 ---
 
 # consensus-persona-respawn
@@ -34,20 +54,24 @@ Consumes persona-engine outputs for long-term adaptation and ties directly into 
 - autonomous systems requiring evaluator maintenance
 
 
-## Runtime, credentials, and network behavior
+## Runtime and network behavior
 
 - runtime binaries: `node`, `tsx`
-- network calls: none in the guard decision path itself
-- conditional network behavior: if a run needs persona generation and your persona-generator backend uses an external LLM, that backend may perform outbound API calls
-- credentials: none required by default
-- optional credentials: external LLM-backed persona generation may require provider API keys (e.g., `OPENAI_API_KEY`) depending on your deployed persona-generator backend
+- network calls: none in shipped respawn logic
+- environment config read by this package: `CONSENSUS_STATE_FILE`, `CONSENSUS_STATE_ROOT`
 - filesystem writes: board/state artifacts under the configured consensus state path
 
 ## Dependency trust model
 
-- `consensus-guard-core` and `consensus-persona-generator` are first-party consensus packages
+- `consensus-guard-core` is the first-party consensus package used in runtime execution
 - versions are semver-pinned in `package.json` for reproducible installs
 - this skill does not request host-wide privileges and does not mutate other skills
+
+## Install
+
+```bash
+npm i consensus-persona-respawn
+```
 
 ## Quick start
 

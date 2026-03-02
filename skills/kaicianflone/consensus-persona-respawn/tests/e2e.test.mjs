@@ -1,7 +1,7 @@
 import test from 'node:test'; import assert from 'node:assert/strict'; import fs from 'node:fs'; import os from 'node:os'; import path from 'node:path';
 import { handler } from '../src/index.mjs';
 import { handler as pg } from '../../consensus-persona-generator/src/index.mjs';
-import { writeArtifact, resolveStatePath } from 'consensus-guard-core/src/index.mjs';
+import { writeArtifact, resolveStatePath } from 'consensus-guard-core';
 
 const tmp=()=>path.join(fs.mkdtempSync(path.join(os.tmpdir(),'resp-')),'state.json');
 

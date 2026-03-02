@@ -1,7 +1,6 @@
 import crypto from 'node:crypto';
 import { JsonStorage } from '@consensus-tools/consensus-tools/src/storage/JsonStorage.ts';
-import { handler as personaGen } from 'consensus-persona-generator/src/index.mjs';
-import { rejectUnknown, getLatest, getPersonaSet, writeArtifact, makeIdempotencyKey, resolveStatePath } from 'consensus-guard-core/src/index.mjs';
+import { rejectUnknown, getLatest, getPersonaSet, writeArtifact, makeIdempotencyKey, resolveStatePath } from 'consensus-guard-core';
 
 const TOP = new Set(['board_id','trigger','persona_set_id','lookback_decisions']);
 const TRIGGER = new Set(['persona_id','min_reputation','reason']);
@@ -50,6 +49,21 @@ function buildLearningSummary(personaId, decisions){
   return { source_decisions: considered, mistake_patterns: [...patterns.entries()].sort((a,b)=>b[1]-a[1]).map(([k,v])=>`${k}:${v}`) };
 }
 
+function seedPersonaSet(board_id){
+  const personas = [
+    { name: 'Reliability Sentinel', role: 'reliability', bias: 'failure-first', non_negotiables: ['Rollback path required'], failure_modes: ['overconfidence'] },
+    { name: 'Security Gatekeeper', role: 'security', bias: 'least-privilege', non_negotiables: ['No wildcard privileges'], failure_modes: ['excessive trust'] },
+    { name: 'Operations Realist', role: 'operations', bias: 'operability', non_negotiables: ['Observable rollout'], failure_modes: ['underestimated blast radius'] },
+    { name: 'Risk Controller', role: 'risk', bias: 'downside-aware', non_negotiables: ['Explicit risk acknowledgement'], failure_modes: ['missing edge-case analysis'] },
+    { name: 'Policy Auditor', role: 'policy', bias: 'contract-first', non_negotiables: ['Policy contract compliance'], failure_modes: ['ambiguous requirements'] }
+  ].map((p)=>({
+    persona_id: `persona_${crypto.randomUUID().slice(0,8)}`,
+    reputation: 0.55,
+    ...p
+  }));
+  return { board_id, persona_set_id: crypto.randomUUID(), created_at: new Date().toISOString(), personas };
+}
+
 function mutatePersona(oldPersona, learning){
   const top = learning.mistake_patterns.slice(0,3);
   return {
@@ -71,9 +85,7 @@ export async function handler(input, opts={}){
 
     let personaSet = input.persona_set_id ? await getPersonaSet(board_id, input.persona_set_id, statePath) : await getLatest(board_id, 'persona_set', statePath);
     if (!personaSet) {
-      const g = await personaGen({ board_id, task_context:{ goal:'respawn seed', audience:'internal', risk_tolerance:'medium', constraints:[], domain:'governance' }, n_personas:5, persona_pack:'founder' }, { statePath });
-      if (g.error) return err(board_id, 'PERSONA_GENERATION_FAILED', g.error.message);
-      personaSet = { persona_set_id: g.persona_set_id, personas: g.personas };
+      personaSet = seedPersonaSet(board_id);
     }
 
     const trigger = input.trigger || {};

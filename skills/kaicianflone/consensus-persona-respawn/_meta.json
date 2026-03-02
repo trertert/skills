@@ -3,9 +3,15 @@
   "slug": "consensus-persona-respawn",
   "displayName": "consensus-persona-respawn",
   "latest": {
-    "version": "1.1.8",
-    "publishedAt": 1772343228398,
-    "commit": "https://github.com/openclaw/skills/commit/1cd562d26ff02019e5ade25f7a9b225aa03309e2"
+    "version": "1.1.13",
+    "publishedAt": 1772480568570,
+    "commit": null
   },
-  "history": []
+  "history": [
+    {
+      "version": "1.1.8",
+      "publishedAt": 1772343228398,
+      "commit": "https://github.com/openclaw/skills/commit/1cd562d26ff02019e5ade25f7a9b225aa03309e2"
+    }
+  ]
 }
