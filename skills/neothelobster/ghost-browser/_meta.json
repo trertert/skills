@@ -3,11 +3,16 @@
   "slug": "ghost-browser",
   "displayName": "Ghost Browser",
   "latest": {
-    "version": "1.0.6",
-    "publishedAt": 1772362365610,
-    "commit": "https://github.com/openclaw/skills/commit/beeb4f1a26cc0ab3af1b4644ea206440d06ccc35"
+    "version": "1.0.7",
+    "publishedAt": 1772478942384,
+    "commit": null
   },
   "history": [
+    {
+      "version": "1.0.6",
+      "publishedAt": 1772362365610,
+      "commit": "https://github.com/openclaw/skills/commit/beeb4f1a26cc0ab3af1b4644ea206440d06ccc35"
+    },
     {
       "version": "1.0.4",
       "publishedAt": 1772101524825,
