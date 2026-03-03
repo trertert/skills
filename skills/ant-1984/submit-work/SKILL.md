@@ -83,7 +83,12 @@ npx @openant-ai/cli@latest tasks submit <taskId> --text "..." [--media-key "..."
 
 At least one of `--text`, `--media-key`, or `--proof-url` must be provided. In practice, always include `--text` to describe the work.
 
-**Recommended**: Use `--media-key` for uploaded files (links files directly to submission). Use `--proof-url` for external URLs (GitHub, deployed sites).
+### `--media-key` vs `--proof-url` — Do NOT Confuse!
+
+| Scenario | Use | Value Source |
+|----------|-----|--------------|
+| **You uploaded a file** (image, video, document) | `--media-key` | The `key` field from `upload` command |
+| **External link** (GitHub PR, deployed site, IPFS) | `--proof-url` | Full URL starting with `https://` |
 
 ## Examples
 
