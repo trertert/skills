@@ -1,13 +1,18 @@
 {
   "owner": "jonathanjing",
   "slug": "openclaw-tally",
-  "displayName": "Openclaw Tally",
+  "displayName": "openclaw-tally",
   "latest": {
-    "version": "0.3.0",
-    "publishedAt": 1772422681477,
-    "commit": "https://github.com/openclaw/skills/commit/9fbcb300186c690a7e54de0d964acfa3e5f45023"
+    "version": "0.3.1",
+    "publishedAt": 1772584541930,
+    "commit": null
   },
   "history": [
+    {
+      "version": "0.3.0",
+      "publishedAt": 1772422681477,
+      "commit": "https://github.com/openclaw/skills/commit/9fbcb300186c690a7e54de0d964acfa3e5f45023"
+    },
     {
       "version": "0.1.0",
       "publishedAt": 1771923485516,
