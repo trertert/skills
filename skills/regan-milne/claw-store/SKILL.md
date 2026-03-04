@@ -28,8 +28,10 @@ All content is encrypted client-side with AES-256-GCM before leaving your machin
 
 1. Get an API key: https://web-production-5cce7.up.railway.app/auth/login
 2. Set environment variable: `JACKAL_MEMORY_API_KEY=<your-key>`
-3. Install dependency: `pip install cryptography`
-4. On first save, an encryption key and a Jackal wallet are auto-generated locally and saved to
+3. Install Python dependency: `pip install cryptography`
+4. Install Node.js runtime (recommended Node >=20) and install helper deps in the skill folder:
+   `npm install`
+5. On first save, an encryption key and a Jackal wallet are auto-generated locally and saved to
    `~/.config/jackal-memory/`. These never leave your machine.
 
 **Back up your encryption key** (run once, store the output safely):
@@ -66,6 +68,8 @@ If `JACKAL_MEMORY_API_KEY` is not set:
 ## Base URL
 
 `https://web-production-5cce7.up.railway.app`
+
+Note: this runtime API host is currently on Railway and is distinct from the project homepage domain (`obsideo.io`). Verify endpoint trust in your environment before use.
 
 ## Auth
 
@@ -162,6 +166,9 @@ Local files written by this skill:
 
 - `~/.config/jackal-memory/key` (AES encryption key, if not provided via env)
 - `~/.config/jackal-memory/jackal-mnemonic` (wallet mnemonic, if not provided via env)
+- `.env` (read-only): `jackal-client.js` will load one directory up if present, to populate missing env vars.
+
+Operational note: run in a clean environment when possible to avoid unintentionally inheriting unrelated secrets from `.env`.
 
 ## Security
 
@@ -171,3 +178,4 @@ Local files written by this skill:
 - Back up both keys: `keygen` (encryption) and `wallet` (Jackal mnemonic)
 - Treat memory content as sensitive — it may contain personal or operational data
 - Do not proactively store raw secrets unless the user explicitly asks
+- The client currently fetches the BIP39 wordlist from `raw.githubusercontent.com` at runtime; for high-assurance environments, vendor/pin this wordlist locally.
