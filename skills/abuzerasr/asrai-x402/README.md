@@ -1,6 +1,6 @@
 # Asrai — Crypto Analysis Skill
 
-Crypto market analysis skill for Claude Code and AI agents. Powered by [Asrai](https://asrai.me) via x402 — pay $0.001 USDC per call, no subscription needed.
+Crypto market analysis skill for Claude Code and AI agents. Powered by [Asrai](https://asrai.me) via x402 — pay $0.005 USDC per call, no subscription needed.
 
 ## Install
 
@@ -37,7 +37,7 @@ Add to your Claude Desktop config (`claude_desktop_config.json`):
     "asrai": {
       "command": "npx",
       "args": ["-y", "asrai-mcp"],
-      "env": { "PRIVATE_KEY": "0x<your_private_key>" }
+      "env": { "ASRAI_PRIVATE_KEY": "0x<your_private_key>" }
     }
   }
 }
@@ -58,7 +58,7 @@ Or store the key in `~/.env` and omit the `env` block:
 
 ```
 # ~/.env
-PRIVATE_KEY=0x<your_private_key>
+ASRAI_PRIVATE_KEY=0x<your_private_key>
 ```
 
 Config file locations:
@@ -77,8 +77,8 @@ SSE (legacy):    https://mcp.asrai.me/sse?key=0x<your_private_key>
 
 | Call type | Cost |
 |---|---|
-| Most tools | $0.001 USDC |
-| `ask_ai` | $0.002 USDC |
+| Most tools | $0.005 USDC |
+| `ask_ai` | $0.01 USDC |
 | `indicator_guide` | FREE |
 | Session cap | $2.00 USDC (configurable via `ASRAI_MAX_SPEND`) |
 

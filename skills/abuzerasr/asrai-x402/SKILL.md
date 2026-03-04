@@ -1,6 +1,6 @@
 ---
 name: asrai-x402
-description: Crypto market analysis using Asrai API. Covers technical analysis, screeners, sentiment, forecasting, smart money, Elliott Wave, cashflow, DEX data, and AI-powered insights. Requires asrai-mcp installed and PRIVATE_KEY env var set. Each API call costs $0.001 USDC from your own wallet on Base mainnet via x402.
+description: Crypto market analysis using Asrai API. Covers technical analysis, screeners, sentiment, forecasting, smart money, Elliott Wave, cashflow, DEX data, and AI-powered insights. Requires asrai-mcp installed and ASRAI_PRIVATE_KEY env var set. Each API call costs $0.005 USDC from your own wallet on Base mainnet via x402.
 license: MIT
 ---
 
@@ -16,7 +16,7 @@ This skill requires **asrai-mcp** (Node.js, zero install). Add to Claude Desktop
     "asrai": {
       "command": "npx",
       "args": ["-y", "asrai-mcp"],
-      "env": { "PRIVATE_KEY": "0x<your_private_key>" }
+      "env": { "ASRAI_PRIVATE_KEY": "0x<your_private_key>" }
     }
   }
 }
@@ -24,7 +24,7 @@ This skill requires **asrai-mcp** (Node.js, zero install). Add to Claude Desktop
 
 Or store the key in `~/.env` and omit the `env` block:
 ```
-PRIVATE_KEY=0x<your_private_key>
+ASRAI_PRIVATE_KEY=0x<your_private_key>
 ```
 
 Config file location: macOS `~/Library/Application Support/Claude/claude_desktop_config.json`, Windows `%APPDATA%\Claude\claude_desktop_config.json`, Linux `~/.config/Claude/claude_desktop_config.json`.
@@ -33,7 +33,7 @@ For **n8n / remote connections**, use the hosted SSE server — no install neede
 - HTTP Streamable: `https://mcp.asrai.me/mcp?key=0x<your_private_key>`
 - SSE (legacy): `https://mcp.asrai.me/sse?key=0x<your_private_key>`
 
-Each API call costs **$0.001 USDC** from your wallet on Base mainnet ($0.002 for `ask_ai`). `indicator_guide` is FREE.
+Each API call costs **$0.005 USDC** from your wallet on Base mainnet ($0.01 for `ask_ai`). `indicator_guide` is FREE.
 
 ## Payment transparency
 
@@ -45,21 +45,21 @@ Each API call costs **$0.001 USDC** from your wallet on Base mainnet ($0.002 for
 
 | Tool | What it does | Cost |
 |---|---|---|
-| `market_overview` | Trending, gainers/losers, RSI, top/bottom, CMC AI, CBBI, channel narratives, cashflow, sentiment, social dominance + 9 screeners (ATH, ichimoku-trend, bounce-dip, SAR, MACD, EMA cross, tech rating, volume, high-vol low-cap) | $0.019 (19 calls) |
-| `technical_analysis(symbol, timeframe)` | Signal, ALSAT, SuperALSAT, PSAR, MACD-DEMA, AlphaTrend, TD, forecast, smart money, support/resistance, Elliott Wave, Ichimoku | $0.012 (12 calls) |
-| `sentiment` | CBBI, CMC sentiment, CMC AI | $0.003 (3 calls) |
-| `forecast(symbol)` | AI price forecast | $0.001 |
-| `screener(type)` | Find coins by criteria | $0.001 |
-| `smart_money(symbol, timeframe)` | SMC, order blocks, FVGs, support/resistance | $0.002 (2 calls) |
-| `elliott_wave(symbol, timeframe)` | Elliott Wave analysis | $0.001 |
-| `ichimoku(symbol, timeframe)` | Ichimoku cloud | $0.001 |
-| `cashflow(mode, symbol)` | Capital flow | $0.001 |
-| `coin_info(symbol)` | Stats, info, price, tags, CMC AI + auto DEX data via contract address if available | $0.005–$0.006 (5–6 calls) |
-| `dexscreener(contract)` | DEX data | $0.001 |
-| `chain_tokens(chain, max_mcap)` | Low-cap tokens on chain | $0.001 |
-| `portfolio` | Abu's curated model portfolio — use when asked for investment advice or "what to buy". No symbol = full portfolio. Symbol = Abu's position for that coin. | $0.001 |
-| `channel_summary` | Latest narratives | $0.001 |
-| `ask_ai(question)` | AI analyst answer | $0.002 |
+| `market_overview` | Trending, gainers/losers, RSI, top/bottom, CMC AI, CBBI, channel narratives, cashflow, sentiment, social dominance + 9 screeners (ATH, ichimoku-trend, bounce-dip, SAR, MACD, EMA cross, tech rating, volume, high-vol low-cap) | $0.095 (19 calls) |
+| `technical_analysis(symbol, timeframe)` | Signal, ALSAT, SuperALSAT, PSAR, MACD-DEMA, AlphaTrend, TD, forecast, smart money, support/resistance, Elliott Wave, Ichimoku | $0.06 (12 calls) |
+| `sentiment` | CBBI, CMC sentiment, CMC AI | $0.015 (3 calls) |
+| `forecast(symbol)` | AI price forecast | $0.005 |
+| `screener(type)` | Find coins by criteria | $0.005 |
+| `smart_money(symbol, timeframe)` | SMC, order blocks, FVGs, support/resistance | $0.01 (2 calls) |
+| `elliott_wave(symbol, timeframe)` | Elliott Wave analysis | $0.005 |
+| `ichimoku(symbol, timeframe)` | Ichimoku cloud | $0.005 |
+| `cashflow(mode, symbol)` | Capital flow | $0.005 |
+| `coin_info(symbol)` | Stats, info, price, tags, CMC AI + auto DEX data via contract address if available | $0.025–$0.03 (5–6 calls) |
+| `dexscreener(contract)` | DEX data | $0.005 |
+| `chain_tokens(chain, max_mcap)` | Low-cap tokens on chain | $0.005 |
+| `portfolio` | Abu's curated model portfolio — use when asked for investment advice or "what to buy". No symbol = full portfolio. Symbol = Abu's position for that coin. | $0.005 |
+| `channel_summary` | Latest narratives | $0.005 |
+| `ask_ai(question)` | AI analyst answer | $0.01 |
 | `indicator_guide(name)` | Guide for Asrai custom indicators (ALSAT, SuperALSAT, PMax, AlphaTrend, MavilimW etc.) | FREE |
 
 ## indicator_guide usage
