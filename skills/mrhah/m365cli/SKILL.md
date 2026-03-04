@@ -1,5 +1,5 @@
 ---
-name: m365clicli
+name: m365cli
 description: >
   Use m365 CLI to interact with Microsoft 365 user-level services: send/read/search emails,
   manage calendar events, browse/upload/download OneDrive files, and access SharePoint sites.
