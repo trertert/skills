@@ -94,7 +94,7 @@ python3 skills/bankcard/bankcard.py '{"bankcard":"6212261202011584349"}'
 
 ## 常见错误码
 
-来自 [官方银行卡 API 文档](https://www.jisuapi.com/api/bankcard)：
+来自 [极速数据银行卡 API 文档](https://www.jisuapi.com/api/bankcard)：
 
 **业务错误码：**
 
