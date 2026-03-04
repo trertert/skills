@@ -1,19 +1,17 @@
 # Experiment Design Protocol
 
-Fill this template during the Experiment Design phase. Once complete, mark the protocol
-as LOCKED in the research tree (`experiment.status: locked`) and log the lock in the
-research log. Any deviations after locking must be logged as EXPLORATORY.
+Fill this template during the Experiment Design phase. Once complete, mark it as LOCKED
+in the LOGBOX. Any deviations after locking must be logged as EXPLORATORY.
 
 ---
 
-## 1. Hypothesis
+## 1. Research Question & Claim
 
-- **Hypothesis ID:** [e.g., H1, H2.1 — must match an entry in research-tree.yaml]
+- **One-sentence claim:**
+  [What you will defend if the research succeeds]
 
-- **Statement:**
-  [Copy the testable hypothesis statement from the research tree]
-
-- **Judgment verdict:** [approved — with rationale from judgment gate]
+- **Hypothesis (directional if appropriate):**
+  [Method X improves metric Y on data Z compared to baseline B under conditions C]
 
 - **Scope:**
   [ ] In-domain  [ ] Cross-domain  [ ] Cross-lingual  [ ] Deployment-like  [ ] Mechanistic  [ ] Causal
@@ -115,4 +113,4 @@ research log. Any deviations after locking must be logged as EXPLORATORY.
 
 **Protocol status:** [ ] DRAFT  [ ] UNDER REVIEW  [ ] LOCKED (date: ___)
 **Locked by:** [name/initials]
-**Deviations from locked protocol are logged in the research log as EXPLORATORY.**
+**Deviations from locked protocol are logged in LOGBOX as EXPLORATORY.**
