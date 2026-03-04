@@ -71,4 +71,4 @@ node scripts/update-image.js --project=yaml --env=dev --workload=myapp --image=n
 
 ## 版本
 
-- Skill 版本：2.0.0
+- Skill 版本：4.0.1

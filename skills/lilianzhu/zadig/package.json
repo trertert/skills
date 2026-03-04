@@ -1,6 +1,6 @@
 {
   "name": "zadig-skill",
-  "version": "2.2.0",
+  "version": "4.0.1",
   "description": "[REQUIRED ENV] ZADIG_API_URL + ZADIG_API_KEY | Zadig v4.2 API Client",
   "main": "index.js",
   "openclaw": {

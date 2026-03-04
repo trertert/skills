@@ -124,6 +124,63 @@ function request(method, path, data = null, queryParams = {}) {
   });
 }
 
+/**
+ * Make HTTP request to Zadig API (for SSE streams)
+ * @private
+ */
+function requestStream(method, path, queryParams = {}) {
+  return new Promise((resolve, reject) => {
+    if (!API_BASE) {
+      reject(new Error('ZADIG_API_URL environment variable is not set'));
+      return;
+    }
+
+    if (!API_KEY) {
+      reject(new Error('ZADIG_API_KEY environment variable is not set'));
+      return;
+    }
+
+    // Build query string
+    const queryParts = [];
+    for (const [key, value] of Object.entries(queryParams)) {
+      if (value !== undefined && value !== null) {
+        queryParts.push(`${encodeURIComponent(key)}=${encodeURIComponent(value)}`);
+      }
+    }
+    const queryString = queryParts.length > 0 ? `?${queryParts.join('&')}` : '';
+
+    const url = new URL(path + queryString, API_BASE);
+    const isHttps = url.protocol === 'https:';
+    const lib = isHttps ? https : http;
+
+    const options = {
+      hostname: url.hostname,
+      port: url.port || (isHttps ? 443 : 80),
+      path: url.pathname + url.search,
+      method: method,
+      headers: {
+        'Accept': 'text/event-stream',
+        'Authorization': 'Bearer ' + API_KEY
+      }
+    };
+
+    const req = lib.request(options, (res) => {
+      resolve(res);
+    });
+
+    req.on('error', (e) => {
+      reject(new Error(`Request failed: ${e.message}`));
+    });
+
+    req.setTimeout(30000, () => {
+      req.destroy();
+      reject(new Error('Request timeout'));
+    });
+
+    req.end();
+  });
+}
+
 // ============================================================================
 // 项目 API (Project)
 // 文档：/openapi/projects/project
@@ -1333,9 +1390,10 @@ async function deleteCollaboration(params) {
  * @returns {Promise<Stream>} SSE 日志流
  */
 async function getContainerLogs(params) {
-  const { podName, containerName } = params;
-  // 注意：这是 SSE 流，需要特殊处理
-  return await request('GET', `/openapi/logs/sse/pods/${podName}/containers/${containerName}`);
+  const { podName, containerName, projectKey, envName } = params;
+  // 需要 projectKey 和 envName 参数才能获取日志
+  const query = projectKey && envName ? `?projectKey=${projectKey}&envName=${envName}` : '';
+  return await requestStream('GET', `/openapi/logs/sse/pods/${podName}/containers/${containerName}${query}`);
 }
 
 /**
@@ -1349,7 +1407,7 @@ async function getContainerLogs(params) {
  */
 async function getWorkflowTaskLogs(params) {
   const { workflowKey, taskId, jobTaskName, tails = 100 } = params;
-  return await request('GET', `/openapi/logs/sse/v4/workflow/${workflowKey}/${taskId}/${jobTaskName}/${tails}`);
+  return await requestStream('GET', `/openapi/logs/sse/v4/workflow/${workflowKey}/${taskId}/${jobTaskName}/${tails}`);
 }
 
 /**
@@ -1363,6 +1421,123 @@ async function getWorkflowTaskLogs(params) {
 async function getWorkflowTaskFullLogs(params) {
   const { workflowKey, taskId, jobTaskName } = params;
   return await request('GET', `/openapi/logs/log/v4/workflow/${workflowKey}/${taskId}/${jobTaskName}`);
+}
+
+// ============================================================================
+// 便捷方法
+// ============================================================================
+
+/**
+ * 获取服务状态（一步到位）
+ * @param {Object} params
+ * @param {string} params.projectKey - 项目标识
+ * @param {string} params.envName - 环境名称
+ * @param {string} params.serviceName - 服务名称
+ * @returns {Promise<Object>} 服务状态信息
+ */
+async function getServiceStatus(params) {
+  const { projectKey, envName, serviceName } = params;
+  
+  // 区分 prod 环境和其他环境，使用不同的 API
+  let service;
+  if (envName === 'prod') {
+    service = await getProductionEnvironmentService({ projectKey, envName, serviceName });
+  } else {
+    service = await getEnvironmentService({ projectKey, envName, serviceName });
+  }
+  
+  const scale = service.scales[0];
+  // 优先选择 Running 状态的 Pod
+  const pod = scale?.pods?.find(p => p.status === 'Running') || scale?.pods?.[0];
+  
+  return {
+    service_name: serviceName,
+    env_name: envName,
+    project_key: projectKey,
+    status: pod?.status || 'Unknown',
+    image: pod?.containers?.[0]?.image || '',
+    pod_name: pod?.name || '',
+    node: pod?.node_name || '',
+    ip: pod?.ip || '',
+    ports: pod?.containers?.[0]?.ports || [],
+    age: pod?.age || '',
+    containers_message: pod?.containers_message || '',
+    service_endpoints: service.service_endpoints || [],
+    all_pods: scale?.pods?.map(p => ({
+      name: p.name,
+      status: p.status,
+      age: p.age,
+      image: p.containers?.[0]?.image
+    })) || []
+  };
+}
+
+/**
+ * 同步获取服务日志（通过 curl）
+ * @param {Object} params
+ * @param {string} params.projectKey - 项目标识
+ * @param {string} params.envName - 环境名称
+ * @param {string} params.serviceName - 服务名称
+ * @param {number} [params.tailLines=100] - 返回行数
+ * @returns {Promise<string>} 日志文本
+ */
+async function getServiceLogsSync(params) {
+  const { projectKey, envName, serviceName, tailLines = 100 } = params;
+  
+  // 区分 prod 环境和其他环境，使用不同的 API 获取服务信息
+  let service;
+  if (envName === 'prod') {
+    service = await getProductionEnvironmentService({ projectKey, envName, serviceName });
+  } else {
+    service = await getEnvironmentService({ projectKey, envName, serviceName });
+  }
+  
+  const pod = service.scales[0]?.pods?.find(p => p.status === 'Running');
+  
+  if (!pod) {
+    throw new Error(`No running pod found for service ${serviceName}`);
+  }
+  
+  const containerName = pod.containers[0]?.name;
+  if (!containerName) {
+    throw new Error(`No container found in pod ${pod.name}`);
+  }
+  
+  // 使用 curl 获取 SSE 日志（需要 projectKey 和 envName 参数）
+  const { execSync } = require('child_process');
+  const url = `${API_BASE}/openapi/logs/sse/pods/${pod.name}/containers/${containerName}?projectKey=${projectKey}&envName=${envName}&tailLines=${tailLines}`;
+  const cmd = `curl -s -N "${url}" -H "Authorization: Bearer ${API_KEY}" --max-time 10`;
+  
+  let output = '';
+  try {
+    output = execSync(cmd, { encoding: 'utf8', timeout: 15000 });
+  } catch (e) {
+    // curl 超时 (exit code 28) 或其他错误，但可能已有数据在 stdout
+    if (e.stdout) {
+      output = e.stdout;
+    } else {
+      return `获取日志失败: ${e.message}`;
+    }
+  }
+  
+  // 解析 SSE 格式
+  if (!output || output.length < 10) {
+    return '（暂无日志输出）';
+  }
+  
+  const lines = output.split('\n');
+  let data = '';
+  let currentEvent = '';
+  
+  for (const line of lines) {
+    if (line.startsWith('event:')) {
+      currentEvent = line.substring(6);
+    } else if (line.startsWith('data:') && currentEvent === 'message') {
+      data += line.substring(5) + '\n';
+    }
+  }
+  
+  return data.trim() || '（无日志输出）';
 }
 
 // ============================================================================
@@ -1499,6 +1674,10 @@ module.exports = {
   getContainerLogs,
   getWorkflowTaskLogs,
   getWorkflowTaskFullLogs,
+  
+  // 便捷方法
+  getServiceStatus,
+  getServiceLogsSync,
   
   // 配置
   config: {

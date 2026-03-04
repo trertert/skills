@@ -48,6 +48,43 @@ await zadig.triggerWorkflow({
   workflowKey: 'build',
   inputs: [...]
 });
+
+// ===== 便捷方法 =====
+
+// 获取服务状态（一步到位）
+const status = await zadig.getServiceStatus({
+  projectKey: 'yaml',
+  envName: 'dev',
+  serviceName: 'service1'
+});
+/* 返回:
+{
+  service_name: 'service1',
+  env_name: 'dev',
+  status: 'Running',
+  image: 'koderover.tencentcloudcr.com/test/service1:xxx',
+  pod_name: 'service1-xxx-xxx',
+  node: '172.16.64.16',
+  ip: '172.16.64.132',
+  ports: [{ containerPort: 20221, protocol: 'TCP' }],
+  service_endpoints: [{ name: 'service1', service_port: 20221, node_port: 31331 }]
+}
+*/
+
+// 获取服务日志（同步返回文本）
+const logs = await zadig.getServiceLogsSync({
+  projectKey: 'yaml',
+  envName: 'dev',
+  serviceName: 'service1',
+  tailLines: 100
+});
+// 返回日志文本
+
+// 获取工作流任务状态
+const task = await zadig.getWorkflowTask({
+  workflowKey: 'dev-build',
+  taskId: 67
+});
 ```
 
 ## 安全建议
