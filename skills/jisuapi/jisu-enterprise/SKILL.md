@@ -187,7 +187,7 @@ python3 skills/enterprise/enterprise.py shareholder '{"company":"杭州极速互
 
 ## 常见错误码
 
-来源于 [官方企业工商文档](https://www.jisuapi.com/api/enterprise/)：
+来源于 [极速数据企业工商文档](https://www.jisuapi.com/api/enterprise/)：
 
 | 代号 | 说明                         |
 |------|------------------------------|
