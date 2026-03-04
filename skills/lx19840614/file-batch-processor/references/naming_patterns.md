@@ -1,40 +1,40 @@
-# 文件重命名模式指南
+# File Renaming Patterns Guide
 
-## 1. 序号模式
-- **格式**: `前缀_001.扩展名`, `文件_001.jpg`
-- **适用场景**: 批量处理照片、截图等需要有序编号的文件
-- **参数**: 
-  - 起始序号: 1, 100, 1000等
-  - 位数: 3位(001), 4位(0001)等
+## 1. Sequence Mode
+- **Format**: `prefix_001.extension`, `file_001.jpg`
+- **Use Cases**: Batch processing photos, screenshots, etc. needing sequential numbering
+- **Parameters**: 
+  - Starting number: 1, 100, 1000, etc.
+  - Digits: 3 digits (001), 4 digits (0001), etc.
 
-## 2. 日期模式
-- **格式**: `20240302_照片.jpg`, `2024-03-02_文档.pdf`
-- **日期格式代码**:
-  - `%Y`: 年份 (2024)
-  - `%m`: 月份 (03)
-  - `%d`: 日期 (02)
-  - `%H`: 小时 (14)
-  - `%M`: 分钟 (30)
-  - `%S`: 秒 (45)
+## 2. Date Mode
+- **Format**: `20240302_photo.jpg`, `2024-03-02_document.pdf`
+- **Date Format Codes**:
+  - `%Y`: Year (2024)
+  - `%m`: Month (03)
+  - `%d`: Day (02)
+  - `%H`: Hour (14)
+  - `%M`: Minute (30)
+  - `%S`: Second (45)
 
-## 3. 前缀/后缀模式
-- **前缀添加**: `备份_文件.docx`, `重要_合同.pdf`
-- **后缀添加**: `文件_副本.jpg`, `最终版_报告.docx`
-- **组合使用**: `2024_项目_001_final.pdf`
+## 3. Prefix/Suffix Mode
+- **Prefix Addition**: `backup_file.docx`, `important_contract.pdf`
+- **Suffix Addition**: `file_copy.jpg`, `final_version_report.docx`
+- **Combined Use**: `2024_project_001_final.pdf`
 
-## 4. 批量替换模式
-- **示例**: 
-  - `旧名称` → `新名称`
-  - `IMG_` → `照片_`
-  - `扫描件_` → `正式版_`
+## 4. Batch Replace Mode
+- **Examples**: 
+  - `old_name` → `new_name`
+  - `IMG_` → `photo_`
+  - `scanned_` → `official_`
 
-## 5. 高级模式
-- **随机字符串**: 生成随机字母数字组合
-- **文件大小**: 在文件名中包含文件大小信息
-- **创建时间**: 使用文件创建时间戳
+## 5. Advanced Modes
+- **Random String**: Generate random alphanumeric combinations
+- **File Size**: Include file size information in filename
+- **Creation Time**: Use file creation timestamp
 
-## 6. 推荐实践
-- **备份优先**: 处理前先备份原文件
-- **测试先行**: 先用少量文件测试重命名效果
-- **避免重名**: 确保新文件名不会与现有文件冲突
-- **保持简洁**: 文件名不宜过长，便于管理和搜索
+## 6. Recommended Practices
+- **Backup First**: Backup original files before processing
+- **Test First**: Test renaming effect with small number of files first
+- **Avoid Duplicates**: Ensure new filenames don't conflict with existing files
+- **Keep Concise**: Filenames should not be too long, easy to manage and search

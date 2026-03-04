@@ -1,8 +1,8 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 """
-自动文件分类整理工具
-按文件类型自动归类到不同文件夹
+Auto File Organization Tool
+Automatically categorize files by type into different folders
 """
 
 import os
@@ -13,76 +13,76 @@ from pathlib import Path
 
 def organize_files(folder_path, dry_run=False):
     """
-    自动分类整理文件
+    Automatically categorize and organize files
     
     Args:
-        folder_path: 文件夹路径
-        dry_run: 是否只预览不执行
+        folder_path: Folder path
+        dry_run: Whether to preview only without execution
     """
     if not os.path.exists(folder_path):
-        print(f"错误：文件夹不存在 {folder_path}")
+        print(f"Error: Folder does not exist {folder_path}")
         return False
     
-    # 分类规则
+    # Categorization rules
     categories = {
-        '文档': ['.doc', '.docx', '.pdf', '.txt', '.md', '.rtf'],
-        '图片': ['.jpg', '.jpeg', '.png', '.bmp', '.gif', '.tiff'],
-        '音频': ['.mp3', '.wav', '.aac', '.ogg', '.m4a'],
-        '视频': ['.mp4', '.avi', '.mkv', '.mov', '.wmv'],
-        '压缩包': ['.zip', '.rar', '.7z', '.tar', '.gz'],
-        '其他': []
+        'Documents': ['.doc', '.docx', '.pdf', '.txt', '.md', '.rtf'],
+        'Images': ['.jpg', '.jpeg', '.png', '.bmp', '.gif', '.tiff'],
+        'Audio': ['.mp3', '.wav', '.aac', '.ogg', '.m4a'],
+        'Video': ['.mp4', '.avi', '.mkv', '.mov', '.wmv'],
+        'Archives': ['.zip', '.rar', '.7z', '.tar', '.gz'],
+        'Others': []
     }
     
     files = [f for f in os.listdir(folder_path) if os.path.isfile(os.path.join(folder_path, f))]
     
     if not files:
-        print("警告：文件夹中没有找到文件")
+        print("Warning: No files found in the folder")
         return True
     
-    print(f"找到 {len(files)} 个文件，准备分类整理...")
+    print(f"Found {len(files)} files, preparing to categorize...")
     
-    # 创建分类文件夹
+    # Create category folders
     for category in categories.keys():
         category_folder = os.path.join(folder_path, category)
         if not os.path.exists(category_folder):
             if not dry_run:
                 os.makedirs(category_folder)
-            print(f"创建文件夹: {category}")
+            print(f"Created folder: {category}")
     
     organized_count = 0
     for filename in files:
         old_path = os.path.join(folder_path, filename)
         name, ext = os.path.splitext(filename)
         
-        # 确定文件类别
-        category = '其他'
+        # Determine file category
+        category = 'Others'
         for cat, extensions in categories.items():
             if ext.lower() in extensions:
                 category = cat
                 break
         
-        # 目标路径
+        # Target path
         new_path = os.path.join(folder_path, category, filename)
         
         try:
             if dry_run:
-                print(f"预览: {filename} → {category}/")
+                print(f"Preview: {filename} → {category}/")
             else:
-                # 移动文件
+                # Move file
                 shutil.move(old_path, new_path)
-                print(f"已整理: {filename} → {category}/")
+                print(f"Organized: {filename} → {category}/")
                 organized_count += 1
                 
         except Exception as e:
-            print(f"整理失败 {filename}: {e}")
+            print(f"Organization failed {filename}: {e}")
     
-    print(f"完成！共整理 {organized_count} 个文件")
+    print(f"Complete! Total {organized_count} files organized")
     return True
 
 def main():
-    parser = argparse.ArgumentParser(description='自动文件分类整理工具')
-    parser.add_argument('folder', help='要处理的文件夹路径')
-    parser.add_argument('--dry-run', action='store_true', help='只预览不执行')
+    parser = argparse.ArgumentParser(description='Auto File Organization Tool')
+    parser.add_argument('folder', help='Folder path to process')
+    parser.add_argument('--dry-run', action='store_true', help='Preview only without execution')
     
     args = parser.parse_args()
     

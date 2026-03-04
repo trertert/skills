@@ -1,3 +1,3 @@
-这是测试用的文本文件，用于验证批量转PDF功能。
-文件批量处理大师技能测试样例。
-2026年3月2日创建。
+This is a test text file for validating batch PDF conversion functionality.
+File Batch Processor Master skill test sample.
+Created on March 2, 2026.

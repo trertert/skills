@@ -1,52 +1,52 @@
-# 图片压缩技术指南
+# Image Compression Technical Guide
 
-## 1. 压缩质量选择
+## 1. Compression Quality Selection
 
-| 质量级别 | 压缩率 | 适用场景 | 文件大小 |
+| Quality Level | Compression Rate | Use Cases | File Size |
 |---------|--------|----------|----------|
-| 高 (90%) | 20-30% | 需要高质量显示 | 较大 |
-| 中 (70%) | 40-50% | 日常使用、网页展示 | 适中 |
-| 低 (50%) | 60-70% | 快速传输、存储空间有限 | 较小 |
+| High (90%) | 20-30% | High-quality display needed | Larger |
+| Medium (70%) | 40-50% | Daily use, web display | Moderate |
+| Low (50%) | 60-70% | Fast transfer, limited storage | Smaller |
 
-## 2. 尺寸调整建议
+## 2. Size Adjustment Recommendations
 
-### 按用途调整：
-- **网页展示**: 1920×1080 或 1200×800
-- **手机查看**: 800×600 或 600×400
-- **打印输出**: 300dpi, 至少 2400×1600
-- **社交媒体**: 1080×1080 (正方形), 1080×1920 (竖版)
+### By Usage:
+- **Web Display**: 1920×1080 or 1200×800
+- **Mobile Viewing**: 800×600 or 600×400
+- **Print Output**: 300dpi, minimum 2400×1600
+- **Social Media**: 1080×1080 (square), 1080×1920 (vertical)
 
-### 缩放比例：
-- **50%**: 适合大多数网页和移动设备
-- **30%**: 适合快速预览和大量文件处理
-- **100%**: 保持原始尺寸，仅压缩质量
+### Scaling Ratios:
+- **50%**: Suitable for most websites and mobile devices
+- **30%**: Suitable for quick preview and large file processing
+- **100%**: Keep original size, only compress quality
 
-## 3. 格式选择
+## 3. Format Selection
 
-| 格式 | 特点 | 推荐场景 |
+| Format | Features | Recommended Scenarios |
 |------|------|----------|
-| JPEG | 有损压缩，文件小 | 照片、复杂图像 |
-| PNG | 无损压缩，支持透明 | 截图、图标、需要透明背景的图片 |
-| WebP | 新格式，压缩率高 | 网页优化，现代浏览器 |
+| JPEG | Lossy compression, smaller files | Photos, complex images |
+| PNG | Lossless compression, supports transparency | Screenshots, icons, images needing transparency |
+| WebP | New format, high compression rate | Web optimization, modern browsers |
 
-## 4. 批量处理最佳实践
+## 4. Batch Processing Best Practices
 
-### 处理前准备：
-- 创建备份文件夹
-- 测试1-2个文件确认效果
-- 检查目标文件夹空间
+### Pre-processing Preparation:
+- Create backup folder
+- Test 1-2 files to confirm effect
+- Check target folder space
 
-### 处理中监控：
-- 大文件处理可能较慢
-- 监控CPU和内存使用
-- 可分批处理（每次100-200个文件）
+### Processing Monitoring:
+- Large file processing may be slow
+- Monitor CPU and memory usage
+- Can process in batches (100-200 files per batch)
 
-### 处理后检查：
-- 随机抽查压缩效果
-- 确认文件完整性
-- 记录压缩率和节省空间
+### Post-processing Check:
+- Randomly check compression results
+- Confirm file integrity
+- Record compression rate and space saved
 
-## 5. 性能优化
-- 使用多线程处理（脚本支持）
-- 内存优化：处理大文件时分块读取
-- 错误恢复：记录失败文件，便于重试
+## 5. Performance Optimization
+- Use multi-thread processing (script supports)
+- Memory optimization: Process large files in chunks
+- Error recovery: Record failed files for retry

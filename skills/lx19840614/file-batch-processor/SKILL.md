@@ -1,33 +1,31 @@
 ---
 name: file-batch-processor
-description: "一键批量处理所有文件：重命名、压缩图片、转 PDF、自动分类整理，无需安装任何软件，小龙虾本地运行，安全无广告，职场 / 学生 / 店主必备神器！使用场景：批量文件重命名、批量图片压缩、批量转 PDF、按类型自动分类整理。适用于Windows系统，新手友好，办公效率提升神器。"
+description: "One-click batch processing for all files: rename, compress images, convert to PDF, auto organize. No software installation needed, runs locally, safe and ad-free. Essential tool for professionals/students/shop owners! Use cases: batch file rename, batch image compression, batch PDF conversion, auto categorize by type. Windows compatible, newbie-friendly, office efficiency booster."
 ---
 
-# 文件批量处理大师
+# File Batch Processor Master
 
-## 🎯 核心功能
+## 🎯 Core Features
 
-1. **批量文件重命名** - 支持多种命名模式（序号、日期、前缀后缀等）
-2. **批量图片压缩** - JPEG/PNG格式智能压缩，保持质量
-3. **批量转 PDF** - 图片、文本文件一键转PDF
-4. **自动分类整理** - 按文件类型（文档、图片、音频、视频、压缩包）自动归类
+1. **Batch File Rename** - Multiple naming modes (sequence, date, prefix/suffix, etc.)
+2. **Batch Image Compression** - Smart JPEG/PNG compression with quality preservation
+3. **Batch to PDF** - One-click conversion of images and text files to PDF
+4. **Auto Categorization** - Automatically categorize files by type (documents, images, audio, video, archives)
 
-## 🚀 快速开始
-
-### 基本工作流程
-```bash
-# 1. 选择要处理的文件夹
-# 2. 选择处理功能（可多选）
-# 3. 配置参数（如重命名规则、压缩质量）
-# 4. 执行处理
-# 5. 查看结果报告
+## 🚀 Quick Start
+### Basic Workflow
+# 1. Select folder to process
+# 2. Choose processing functions (can select multiple)
+# 3. Configure parameters (rename rules, compression quality, etc.)
+# 4. Execute processing
+# 5. View results report
 ```
 
-## 📁 目录结构
+## 📁 Directory Structure
 
 ```
 file-batch-processor/
-├── SKILL.md (当前文件)
+├── SKILL.md (current file)
 ├── scripts/
 │   ├── batch_rename.py
 │   ├── image_compress.py  
@@ -39,61 +37,80 @@ file-batch-processor/
     └── file_types.md
 ```
 
-## 🔧 功能详解
+## 🔧 Feature Details
 
-### 1. 批量文件重命名
-- **支持模式**：
-  - 序号模式：`文件_001.jpg`, `文件_002.jpg`
-  - 日期模式：`20240302_照片1.jpg`
-  - 前缀/后缀添加：`备份_文件.docx`, `文件_副本.pdf`
-  - 批量替换：`旧名称` → `新名称`
+### 1. Batch File Rename
+- **Supported Modes**:
+  - Sequence mode: `file_001.jpg`, `file_002.jpg`
+  - Date mode: `20240302_photo1.jpg`
+  - Prefix/suffix add: `backup_file.docx`, `file_copy.pdf`
+  - Batch replace: `old_name` → `new_name`
 
-### 2. 批量图片压缩
-- **支持格式**：JPEG, PNG
-- **压缩选项**：
-  - 质量级别：高(90%)、中(70%)、低(50%)
-  - 尺寸调整：原始尺寸、50%、30%
-  - 批量处理：支持1000+文件
+### 2. Batch Image Compression
+- **Supported Formats**: JPEG, PNG
+- **Compression Options**:
+  - Quality levels: High (90%), Medium (70%), Low (50%)
+  - Size adjustment: Original size, 50%, 30%
+  - Batch processing: Supports 1000+ files
 
-### 3. 批量转 PDF
-- **支持源文件**：
-  - 图片文件（JPG, PNG, BMP等）
-  - 文本文件（TXT, MD）
-  - Office文档（需配合其他工具）
+### 3. Batch to PDF
+- **Supported Source Files**:
+  - Image files (JPG, PNG, BMP, etc.)
+  - Text files (TXT, MD)
+  - Office documents (requires additional tools)
 
-### 4. 自动分类整理
-- **分类规则**：
-  - 📄 文档类：.doc, .docx, .pdf, .txt, .md
-  - 🖼️ 图片类：.jpg, .jpeg, .png, .bmp, .gif
-  - 🎵 音频类：.mp3, .wav, .aac
-  - 🎥 视频类：.mp4, .avi, .mkv
-  - 📦 压缩包：.zip, .rar, .7z
-  - 📁 其他：剩余文件
+- **Categorization Rules**:
+  - 📄 Documents: .doc, .docx, .pdf, .txt, .md
+  - 🖼️ Images: .jpg, .jpeg, .png, .bmp, .gif
+  - 🎵 Audio: .mp3, .wav, .aac
+  - 🎥 Video: .mp4, .avi, .mkv
+  - 📦 Archives: .zip, .rar, .7z
+  - 📁 Others: Remaining files
 
-## 🎨 技能图标
-- 推荐图标：文件夹/工具类图标
-- 颜色方案：蓝色系（专业可靠）+ 绿色（效率提升）
+## 🎨 Skill Icon
+- Recommended icons: Folder/Tool type icons
+- Color scheme: Blue tones (professional & reliable) + Green (efficiency boost)
 
-## 🎯 使用场景
-- 📁 整理手机下载的大量照片
-- 📊 处理工作中的一批文档
-- 🛒 店主整理商品图片
-- 🎓 学生整理学习资料
-- 💼 职场人士提高办公效率
+- ?? Organize large amounts of photos downloaded from phone
+- 📊 Process batches of work documents
+- 🛒 Shop owners organizing product images
+- 🎓 Students organizing study materials
+- 💼 Professionals improving office efficiency
 
-## ⚙️ 技术实现
-- **平台**：Windows（最通用）
-- **依赖**：Python 3.8+, Pillow, PyPDF2, pdfkit（可选）
-- **安全**：本地运行，无网络请求，无数据上传
+## ⚙️ Technical Implementation
+- **Platform**: Windows (most compatible)
+- **Dependencies**: Python 3.8+, Pillow, PyPDF2, pdfkit (optional)
+- **Security**: Runs locally, no network requests, no data uploads
 
-## 📝 注意事项
-- 处理前建议备份重要文件
-- 大文件批量处理可能需要较长时间
-- 压缩图片时建议先测试小样本
+## 📝 Precautions
+- Backup important files before processing
+- Large batch processing may take time
+- Test with small samples when compressing images
 
-## 📚 参考资料
-- [naming_patterns.md] - 详细命名模式说明
-- [compression_guide.md] - 图片压缩技术指南  
-- [file_types.md] - 文件类型识别规则
+## 📚 References
+- [naming_patterns.md] - Detailed naming patterns guide
+- [compression_guide.md] - Image compression technical guide
+- [file_types.md] - File type identification rules
 
-> 💡 提示：本技能设计为"开箱即用"，新手也能轻松上手，是职场、学生、店主的必备效率神器！
+> 💡 Tip: This skill is designed to be "out-of-the-box" ready, easy for beginners to use, and an essential efficiency tool for professionals, students, and shop owners!
+## 📦 Version Information
+- **Current Version**: 1.0.0
+- **Release Date**: 2026-03-03
+- **Release Platform**: [ClawHub](https://clawhub.com/skills/file-batch-processor)
+- **Author**: lx19840614
+
+## 📝 Changelog
+### v1.0.0 (2026-03-03) - Initial Version
+- ✅ Batch file rename (5 modes)
+- ✅ Batch image compression (quality/size adjustable)
+- ✅ Batch convert to PDF (images/text)
+- ✅ Auto file organization (6 categories)
+- ✅ Preview mode (--dry-run)
+- ✅ Windows optimized
+- ✅ Complete documentation (README + video script + promotion plan)
+### 📋 Planned Updates
+- [ ] Chinese font PDF support
+- [ ] Batch backup function
+- [ ] Progress bar display
+- [ ] GUI graphical interface
+- [ ] macOS/Linux support

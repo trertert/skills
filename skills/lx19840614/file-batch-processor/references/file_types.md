@@ -1,58 +1,58 @@
-# 文件类型识别规则
+# File Type Identification Rules
 
-## 1. 文档类 (.doc, .docx, .pdf, .txt, .md, .rtf)
-- **特征**: 文本内容为主，用于阅读和编辑
-- **处理建议**: 
-  - 重命名时保留原扩展名
-  - 转PDF时保持格式完整性
-  - 分类到"文档"文件夹
+## 1. Document Types (.doc, .docx, .pdf, .txt, .md, .rtf)
+- **Characteristics**: Mainly text content, for reading and editing
+- **Processing Suggestions**: 
+  - Keep original extension when renaming
+  - Maintain format integrity when converting to PDF
+  - Categorize to "Documents" folder
 
-## 2. 图片类 (.jpg, .jpeg, .png, .bmp, .gif, .tiff)
-- **特征**: 视觉内容，像素数据
-- **处理建议**:
-  - 优先进行压缩处理
-  - 转PDF时保持清晰度
-  - 分类到"图片"文件夹
-  - 注意版权和隐私问题
+## 2. Image Types (.jpg, .jpeg, .png, .bmp, .gif, .tiff)
+- **Characteristics**: Visual content, pixel data
+- **Processing Suggestions**:
+  - Prioritize compression processing
+  - Maintain clarity when converting to PDF
+  - Categorize to "Images" folder
+  - Pay attention to copyright and privacy issues
 
-## 3. 音频类 (.mp3, .wav, .aac, .ogg, .m4a)
-- **特征**: 声音数据，时间序列
-- **处理建议**:
-  - 重命名时可添加时间信息
-  - 不建议转PDF（除非特殊需求）
-  - 分类到"音频"文件夹
-  - 注意文件大小和比特率
+## 3. Audio Types (.mp3, .wav, .aac, .ogg, .m4a)
+- **Characteristics**: Sound data, time series
+- **Processing Suggestions**:
+  - Can add time information when renaming
+  - Not recommended for PDF conversion (unless special need)
+  - Categorize to "Audio" folder
+  - Pay attention to file size and bitrate
 
-## 4. 视频类 (.mp4, .avi, .mkv, .mov, .wmv)
-- **特征**: 动态视觉+音频，大文件
-- **处理建议**:
-  - 重命名时添加时长或分辨率信息
-  - 不建议转PDF（可提取封面图转PDF）
-  - 分类到"视频"文件夹
-  - 处理前确认存储空间
+## 4. Video Types (.mp4, .avi, .mkv, .mov, .wmv)
+- **Characteristics**: Dynamic visuals + audio, large files
+- **Processing Suggestions**:
+  - Add duration or resolution info when renaming
+  - Not recommended for PDF conversion (can extract cover image for PDF)
+  - Categorize to "Video" folder
+  - Confirm storage space before processing
 
-## 5. 压缩包类 (.zip, .rar, .7z, .tar, .gz)
-- **特征**: 多文件打包，需要解压
-- **处理建议**:
-  - 重命名时保持原扩展名
-  - 不建议直接转PDF
-  - 分类到"压缩包"文件夹
-  - 处理前确认是否需要解压
+## 5. Archive Types (.zip, .rar, .7z, .tar, .gz)
+- **Characteristics**: Multiple files packaged, needs extraction
+- **Processing Suggestions**:
+  - Keep original extension when renaming
+  - Not recommended for direct PDF conversion
+  - Categorize to "Archives" folder
+  - Confirm if extraction is needed before processing
 
-## 6. 其他类型
-- **程序文件**: .exe, .bat, .sh - 保持原样，谨慎处理
-- **数据库文件**: .db, .sqlite - 保持原样
-- **配置文件**: .json, .xml, .yaml - 保持原样
-- **未知类型**: 统一归类到"其他"
+## 6. Other Types
+- **Program Files**: .exe, .bat, .sh - Keep as is, handle with caution
+- **Database Files**: .db, .sqlite - Keep as is
+- **Configuration Files**: .json, .xml, .yaml - Keep as is
+- **Unknown Types**: Uniformly categorize to "Others"
 
-## 7. 扩展名识别规则
-- 优先按完整扩展名匹配
-- 忽略大小写（.JPG = .jpg）
-- 支持多级扩展名（.tar.gz → 归类为压缩包）
-- 未知扩展名默认归为"其他"
+## 7. Extension Identification Rules
+- Prioritize full extension matching
+- Case insensitive (.JPG = .jpg)
+- Support multi-level extensions (.tar.gz → categorized as archive)
+- Unknown extensions default to "Others"
 
-## 8. 安全注意事项
-- 不处理系统关键文件（如Windows目录下的文件）
-- 不处理隐藏文件（以.开头的文件）
-- 处理前询问用户确认重要文件操作
-- 提供撤销功能（备份机制）
+## 8. Security Precautions
+- Do not process system critical files (e.g., files in Windows directory)
+- Do not process hidden files (files starting with .)
+- Ask user confirmation for important file operations
+- Provide undo functionality (backup mechanism)
