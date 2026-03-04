@@ -8,7 +8,7 @@ metadata: { "openclaw": { "primaryEnv": "AICOIN_ACCESS_KEY_ID", "requires": { "b
 
 Crypto data & trading toolkit powered by [AiCoin Open API](https://www.aicoin.com/opendata).
 
-**Version:** 1.5.10 | **Last Updated:** 2026-03-04
+**Version:** 1.5.17 | **Last Updated:** 2026-03-04
 
 ## Quick Reference — Most Common Commands
 
@@ -40,6 +40,22 @@ Crypto data & trading toolkit powered by [AiCoin Open API](https://www.aicoin.co
 | **Backtest** | `node scripts/ft-deploy.mjs backtest '{"strategy":"SampleStrategy","timerange":"20250101-"}'` ⚠️ MUST use this script |
 
 **Symbol shortcuts:** `BTC`, `ETH`, `SOL`, `DOGE`, `XRP` auto-resolve to AiCoin format (e.g. `btcswapusdt:binance`) in coin.mjs. For exchange.mjs, use CCXT format: `BTC/USDT`, `BTC/USDT:USDT` (swap).
+
+**Chinese Slang Recognition:** Understand common crypto slang: 大饼=BTC, 姨太=ETH, 狗狗=DOGE, 瑞波=XRP, 索拉纳=SOL, 做多=long, 做空=short, 爆仓=liquidation, 合约=futures/swap.
+
+**Common Errors & Solutions:**
+- `Error: Invalid symbol` → Check symbol format (AiCoin: `btcusdt:okex`, CCXT: `BTC/USDT`)
+- `Error: Insufficient balance` → Check balance first with `exchange.mjs balance`, don't auto-adjust order size
+- `Error: API key invalid` → Keys are in `.env`, never pass inline. Check if user configured exchange keys.
+- `Timeout` → Freqtrade operations may take 5+ minutes, increase timeout or use `ft-deploy.mjs` which handles this
+- `Rate limit exceeded` → Wait 1-2 seconds between requests. Use batch queries when possible to reduce API calls.
+
+**Response Format Best Practices:**
+- Use tables for structured data (prices, K-lines, balances)
+- Include units (USDT, BTC, %) and directions (📈/📉) for clarity
+- For analysis: show data first, then interpretation
+- Keep responses concise - users can ask for details if needed
+- Always fetch fresh data - NEVER use cached or memorized prices
 
 ## Setup Checklist
 
@@ -482,6 +498,7 @@ Requires `npm install ccxt` and exchange API keys.
 4. For futures/swap: calculate actual buying power = balance × leverage
 5. Verify: buying power ≥ order value
 6. **Confirm with user**: "You want to buy X contracts (= Y BTC ≈ Z USDT), correct?" before placing the order
+7. Show clear summary: Coin, Direction, Quantity, Est. Cost, Leverage (if applicable)
 
 Example pre-trade check for BTC/USDT perpetual on OKX:
 ```bash
@@ -722,3 +739,16 @@ This automatically:
 - 停止机器人 / stop bot → `ft.mjs stop` or `ft-deploy.mjs stop`
 
 **IMPORTANT: For backtesting, use `ft-deploy.mjs backtest`. Do NOT write custom Python backtest scripts. The Freqtrade backtester is production-grade with proper slippage, fees, and position sizing simulation.**
+
+### Troubleshooting
+
+**If deployment fails:**
+1. Check Python version: `python3 --version` (need 3.11+)
+2. Check logs: `node scripts/ft-deploy.mjs logs`
+3. Verify exchange keys in `~/.openclaw/workspace/.env`
+4. DO NOT try manual fixes - report error and let ft-deploy.mjs handle it
+
+**If backtest fails:**
+1. Verify strategy file exists in `~/.freqtrade/user_data/strategies/`
+2. Check timerange format: `YYYYMMDD-YYYYMMDD` (e.g., `20250101-20260301`)
+3. Ensure data is downloaded (ft-deploy.mjs auto-downloads on first backtest)
