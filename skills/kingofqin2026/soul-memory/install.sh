@@ -1,10 +1,10 @@
 #!/bin/bash
 
 ################################################################################
-# Soul Memory System v3.2.2 - Installation Script
+# Soul Memory System v3.3.1 - Installation Script
 #
 # 功能：自動安裝 Soul Memory 系統 + OpenClaw Plugin + Heartbeat 自動儲存
-# 用法：bash install.sh [--dev] [--path /custom/path] [--with-plugin]
+# 用法：bash install.sh [--dev] [--path /custom/path] [--with-plugin] [--rebuild-index]
 ################################################################################
 
 set -e
@@ -20,6 +20,7 @@ NC='\033[0m' # No Color
 INSTALL_PATH="${HOME}/.openclaw/workspace/soul-memory"
 DEV_MODE=false
 INSTALL_PLUGIN=true
+REBUILD_INDEX=false
 OPENCLAW_EXTENSIONS="${HOME}/.openclaw/extensions"
 PYTHON_MIN_VERSION="3.7"
 
@@ -29,8 +30,8 @@ PYTHON_MIN_VERSION="3.7"
 
 print_header() {
     echo -e "${BLUE}╔════════════════════════════════════════════════════════════════╗${NC}"
-    echo -e "${BLUE}║   🧠 Soul Memory System v3.2.2 - Installation Script          ║${NC}"
-    echo -e "${BLUE}║   CLI + Heartbeat v3.2.2 + OpenClaw Plugin Support          ║${NC}"
+    echo -e "${BLUE}║   🧠 Soul Memory System v3.3 - Installation Script            ║${NC}"
+    echo -e "${BLUE}║   CLI + Heartbeat v3.3 + OpenClaw Plugin Support            ║${NC}"
     echo -e "${BLUE}╚════════════════════════════════════════════════════════════════╝${NC}"
     echo ""
 }
@@ -104,6 +105,11 @@ parse_arguments() {
                 print_warning "開發模式已啟用"
                 shift
                 ;;
+            --rebuild-index)
+                REBUILD_INDEX=true
+                print_warning "將重建記憶索引"
+                shift
+                ;;
             --path)
                 INSTALL_PATH="$2"
                 shift 2
@@ -132,16 +138,94 @@ show_help() {
 
 選項:
     --dev                  啟用開發模式（包含測試套件）
+    --rebuild-index        安裝後自動重建記憶索引（推薦升級時使用）
     --path PATH            自定義安裝路徑（默認: ~/.openclaw/workspace/soul-memory）
     --without-plugin       跳過 OpenClaw Plugin 安裝
     --help                 顯示此幫助信息
 
 示例:
     bash install.sh
-    bash install.sh --dev
+    bash install.sh --dev --rebuild-index
     bash install.sh --path /opt/soul-memory
     bash install.sh --without-plugin
+
+v3.3 新功能:
+    • 分層關鍵詞字典（三級權重系統）
+    • 語意相似度去重（difflib, threshold=0.85）
+    • 多標籤索引系統
+    • 通用 Schema（無硬編碼特定字眼）
 EOF
+}
+
+rebuild_memory_index() {
+    print_step "重建記憶索引 (v3.3)..."
+    print_warning "這可能需要幾秒鐘...
+
+    INDEX_SCRIPT="$INSTALL_PATH/rebuild_index.py"
+
+    # 創建索引自動重建腳本
+    cat > "$INDEX_SCRIPT" << 'REBUILD_SCRIPT'
+#!/usr/bin/env python3
+"""
+Soul Memory Index Rebuilder v3.3
+自動重建記憶搜尋索引
+"""
+
+import sys
+import os
+from pathlib import Path
+
+# 添加模組路徑
+script_dir = Path(__file__).parent
+sys.path.insert(0, str(script_dir))
+
+try:
+    from core import SoulMemorySystem
+
+    # 初始化系統
+    sms = SoulMemorySystem()
+    sms.initialize()
+
+    # 刪除舊索引
+    cache_dir = script_dir / "cache"
+    cache_index = cache_dir / "index.json"
+    
+    if cache_index.exists():
+        cache_index.unlink()
+        print("  已刪除舊索引")
+    
+    # 重建索引
+    print("  重建中...")
+    sms.initialize()
+
+    # 獲取索引統計
+    if cache_index.exists():
+        import json
+        with open(cache_index, 'r', encoding='utf-8') as f:
+            data = json.load(f)
+        
+        segments = len(data.get('segments', []))
+        print(f"  索引重建成功: {segments} 個分段")
+        print("  ✅ 記憶索引已自動更新")
+    else:
+        print("  ⚠️  索引文件未生成（可能沒有記憶文件）")
+        
+except Exception as e:
+    print(f"  ❌ 索引重建失敗: {e}")
+    sys.exit(1)
+REBUILD_SCRIPT
+
+    chmod +x "$INDEX_SCRIPT"
+
+    # 執行重建
+    python3 "$INDEX_SCRIPT"
+    
+    if [ $? -eq 0 ]; then
+        print_success "記憶索引重建完成"
+    else
+        print_error "記憶索引重建失敗"
+        print_warning "您可以稍後手動執行: python3 $INDEX_SCRIPT"
+    fi
 }
 
 clone_or_update() {
@@ -166,7 +250,7 @@ install_dependencies() {
 
     if [ -f "$INSTALL_PATH/requirements.txt" ]; then
         if ! command -v pip3 &> /dev/null; then
-            print_warning "pip3 未安未安裝，嘗試使用 python3 -m pip"
+            print_warning "pip3 未安安裝，嘗試使用 python3 -m pip"
             python3 -m pip install --upgrade pip
         fi
 
@@ -195,20 +279,20 @@ run_tests() {
     fi
 }
 
-setup_heartbeat_v32() {
-    print_step "配置 Heartbeat v3.2.2 去重機制..."
+setup_heartbeat_v33() {
+    print_step "配置 Heartbeat v3.3（分層關鍵詞 + 語意去重）..."
 
     HEARTBEAT_FILE="${HOME}/.openclaw/workspace/HEARTBEAT.md"
 
-    # 檢查 HEARTBEAT.md 是否已包含 v3.2.2 配置
-    if [ -f "$HEARTBEAT_FILE" ] && grep -q "v3.2.2" "$HEARTBEAT_FILE"; then
-        print_success "Heartbeat v3.2.2 配置已存在"
+    # 檢查 HEARTBEAT.md 是否已包含 v3.3 配置
+    if [ -f "$HEARTBEAT_FILE" ] && grep -q "v3.3" "$HEARTBEAT_FILE"; then
+        print_success "Heartbeat v3.3 配置已存在"
     else
         print_step "自動更新 HEARTBEAT.md..."
         cat > "$HEARTBEAT_FILE" << 'HEARTBEAT'
-# Heartbeat Tasks (丞相職責) v3.2.2
+# Heartbeat Tasks (丞相職責) v3.3
 
-## 🤖 自動執行：Soul Memory v3.2.2 Heartbeat 檢查
+## 🤖 自動執行：Soul Memory v3.3 Heartbeat 檢查
 
 **每次 Heartbeat 時自動執行以下命令**：
 
@@ -220,43 +304,56 @@ python3 /root/.openclaw/workspace/soul-memory/heartbeat-trigger.py
 
 ---
 
-## Soul Memory 自動記憶系統 v3.2.2
+## Soul Memory 自動記憶系統 v3.3
 
-### 🎯 系統架構（Heartbeat 寬鬆模式 + 去重機制）
+### 🎯 系統架構（Heartbeat + 三層保護機制）
 
 | 機制 | 觸發條件 | 版本 |
 |------|----------|------|
 | **OpenClaw Plugin** | 每次回答前（before_prompt_build） | ✅ v0.1.0 beta |
-| **Heartbeat 寬鬆模式** | 每 30 分鐘左右 | ✅ v3.2.2 |
-| **CLI 接口** | 手動調用 / 測試 | ✅ v3.2.2 |
+| **Heartbeat 主動提取** | 每 30 分鐘左右 | ✅ v3.3 |
+| **CLI 接口** | 手動調用 / 測試 | ✅ v3.3 |
 | **手動即時保存** | 重要對話後立即 | ✅ 可用 |
 
-### 📋 Heartbeat 職責 (v3.2.2)
+### 📋 Heartbeat 職責 (v3.3)
 
 - [ ] 最近對話回顧（識別定義/資料/配置/搜索結果）
 - [ ] 主動提取重要內容（寬鬆模式：降低閾值）
+- [ ] 分層關鍵詞分類（primary/secondary/tertiary 權重）
+- [ ] 語意相似度去重（difflib threshold=0.85）
+- [ ] 多標籤索引支持
 - [ ] 關鍵記憶保存（[C] 定義 / [I] 資料+配置 / ❌ 指令+問候）
 - [ ] 每日檔案檢查（memory/YYYY-MM-DD.md）
 - [ ] ~~X (Twitter) 新聞監控~~ - 已停止
 
-### 🎯 v3.2.2 寬鬆模式改進
+### 🎯 v3.3 核心改進
 
-| 項目 | 修改前（嚴格） | 修改後（寬鬆） |
-|------|--------------|--------------|
-| **最小長度** | 50 字 | **30 字** ↓ |
-| **長文本閾值** | > 200 字 | **> 100 字** ↓ |
-| **最低 importance_score** | >= 2 | **>= 1** ↓ |
-| **排除規則** | HEARTBEAT.md + Read HEARTBEAT.md + [xxx] | **僅 HEARTBEAT.md** ✅ |
+| 項目 | v3.2.2 | v3.3 |
+|------|--------|------|
+| **關鍵詞映射** | 單層 | **三層分級**（權重 10/7/3） |
+| **去重機制** | MD5 哈希 | **MD5 + 語意相似度**（雙層） |
+| **標籤系統** | 單標籤 | **多標籤索引** |
+| **用戶定制** | 硬編碼 | **通用 Schema** |
 
-### 🔄 v3.2.2 去重機制
+### 🔧 三層關鍵詞字典示例
 
-- **MD5 哈希追蹤**：已保存內容不重複
-- **數據結構**：dedup_hashes.json（每日哈希集合）
-- **效率提升**：避免重複保存，節省空間
+```
+Primary (權重 10): framework, core, theory
+Secondary (權重 7): document, export, version
+Tertiary (權重 3): analysis, discussion, review
+```
+
+### 💾 v3.3 數據結構
+
+| 文件 | 用途 |
+|------|------|
+| `dedup_hashes.json` | MD5 哈希去重記錄 |
+| `data/dedup.json` | 語意去重相似度記錄 |
+| `data/tag_index.json` | 多標籤反向索引 |
 
 If nothing needs attention, reply HEARTBEAT_OK.
 HEARTBEAT
-        print_success "HEARTBEAT.md 已自動更新為 v3.2.2"
+        print_success "HEARTBEAT.md 已自動更新為 v3.3"
     fi
 }
 
@@ -265,7 +362,7 @@ setup_openclaw_plugin() {
         return
     fi
 
-    print_step "配置 OpenClaw v0.1.0 Plugin..."
+    print_step "配置 OpenClaw v0.1.1 Plugin (v3.3 update)..."
 
     # 創建 Plugin 目錄
     PLUGIN_DIR="${OPENCLAW_EXTENSIONS}/soul-memory"
@@ -282,8 +379,8 @@ setup_openclaw_plugin() {
 {
   "id": "soul-memory",
   "name": "Soul Memory Context Injector",
-  "version": "0.1.0-beta",
-  "description": "Automatically injects Soul Memory search results before each response using before_prompt_build Hook",
+  "version": "0.1.1",
+  "description": "Automatically injects Soul Memory v3.3 search results before each response using before_prompt_build Hook with multi-tag support",
   "main": "index.ts",
   "configSchema": {
     "type": "object",
@@ -307,6 +404,11 @@ setup_openclaw_plugin() {
         "minimum": 0.0,
         "maximum": 10.0,
         "description": "Minimum similarity score threshold"
+      },
+      "multiTagSearch": {
+        "type": "boolean",
+        "default": true,
+        "description": "Enable multi-tag search (v3.3 feature)"
       }
     }
   },
@@ -324,13 +426,17 @@ setup_openclaw_plugin() {
       "label": "Minimum Score",
       "placeholder": "0.0",
       "description": "Only show memories above this similarity score"
+    },
+    "multiTagSearch": {
+      "label": "Multi-Tag Search",
+      "description": "Enable multi-tag search support (v3.3)"
     }
   }
 }
 PLUGIN_JSON
         print_success "已創成: $PLUGIN_DIR/openclaw.plugin.json"
 
-        # 創建 index.ts
+        # 創建 index.ts (保持不變，兼容 v3.3)
         cat > "$PLUGIN_DIR/index.ts" << 'PLUGIN_TS'
 import { exec } from 'child_process';
 import { promisify } from 'util';
@@ -341,6 +447,7 @@ interface SoulMemoryConfig {
   enabled: boolean;
   topK: number;
   minScore: number;
+  multiTagSearch: boolean;
 }
 
 interface MemoryResult {
@@ -410,33 +517,34 @@ function getLastUserMessage(messages: any[]): string {
 export default function register(api: any) {
   const logger = api.logger || console;
 
-  logger.info('[Soul Memory] Plugin registered via api.register()');
+  logger.info('[Soul Memory v3.3] Plugin registered via api.register()');
 
   api.on('before_prompt_build', async (event: any, ctx: any) => {
     const config: SoulMemoryConfig = {
       enabled: true,
       topK: 5,
       minScore: 0.0,
+      multiTagSearch: true,
       ...api.config.plugins?.entries?.['soul-memory']?.config
     };
 
-    logger.info('[Soul Memory] ✓ BEFORE_PROMPT_BUILD HOOK CALLED via api.on()');
-    logger.debug(`[Soul Memory] Config: enabled=${config.enabled}, topK=${config.topK}, minScore=${config.minScore}`);
-    logger.debug(`[Soul Memory] Event: prompt=${event.prompt?.substring(0, 50)}..., messages=${event.messages?.length || 0}`);
-    logger.debug(`[Soul Memory] Context: agentId=${ctx.agentId}, sessionKey=${ctx.sessionKey}`);
+    logger.info('[Soul Memory v3.3] ✓ BEFORE_PROMPT_BUILD HOOK CALLED');
+    logger.debug(`[Soul Memory v3.3] Config: enabled=${config.enabled}, topK=${config.topK}, minScore=${config.minScore}`);
+    logger.debug(`[Soul Memory v3.3] Event: prompt=${event.prompt?.substring(0, 50)}..., messages=${event.messages?.length || 0}`);
+    logger.debug(`[Soul Memory v3.3] Context: agentId=${ctx.agentId}, sessionKey=${ctx.sessionKey}`);
 
     if (!config.enabled) {
-      logger.info('[Soul Memory] Plugin disabled, skipping');
+      logger.info('[Soul Memory v3.3] Plugin disabled, skipping');
       return {};
     }
 
     const messages = event.messages || [];
     const lastUserMessage = getLastUserMessage(messages);
 
-    logger.debug(`[Soul Memory] Last user message length: ${lastUserMessage.length}`);
+    logger.debug(`[Soul Memory v3.3] Last user message length: ${lastUserMessage.length}`);
 
     if (!lastUserMessage || lastUserMessage.trim().length === 0) {
-      logger.debug('[Soul Memory] No user message found, skipping');
+      logger.debug('[Soul Memory v3.3] No user message found, skipping');
       return {};
     }
 
@@ -446,31 +554,31 @@ export default function register(api: any) {
       .substring(0, 200);
 
     if (query.length < 5) {
-      logger.debug(`[Soul Memory] Query too short (${query.length} chars): "${query}", skipping`);
+      logger.debug(`[Soul Memory v3.3] Query too short (${query.length} chars): "${query}", skipping`);
       return {};
     }
 
-    logger.info(`[Soul Memory] Searching for: "${query}"`);
+    logger.info(`[Soul Memory v3.3] Searching for: "${query}"`);
 
     const results = await searchMemories(query, config);
 
-    logger.info(`[Soul Memory] Found ${results.length} results`);
+    logger.info(`[Soul Memory v3.3] Found ${results.length} results`);
 
     if (results.length === 0) {
-      logger.info('[Soul Memory] No memories found');
+      logger.info('[Soul Memory v3.3] No memories found');
       return {};
     }
 
     const memoryContext = buildMemoryContext(results);
 
-    logger.info(`[Soul Memory] Injected ${results.length} memories into prompt (${memoryContext.length} chars)`);
+    logger.info(`[Soul Memory v3.3] Injected ${results.length} memories into prompt (${memoryContext.length} chars)`);
 
     return {
       prependContext: memoryContext
     };
   });
 
-  logger.info('[Soul Memory] Hook registered via api.on(): before_prompt_build');
+  logger.info('[Soul Memory v3.3] Hook registered: before_prompt_build');
 }
 PLUGIN_TS
         print_success "已創成: $PLUGIN_DIR/index.ts"
@@ -479,8 +587,8 @@ PLUGIN_TS
         cat > "$PLUGIN_DIR/package.json" << 'PACKAGE_JSON'
 {
   "name": "soul-memory-plugin",
-  "version": "0.1.0-beta",
-  "description": "Soul Memory Context Injector for OpenClaw",
+  "version": "0.1.1",
+  "description": "Soul Memory Context Injector v3.3 for OpenClaw",
   "type": "module",
   "main": "index.ts"
 }
@@ -488,36 +596,7 @@ PACKAGE_JSON
         print_success "已創成: $PLUGIN_DIR/package.json"
     fi
 
-    # 配置 OpenClaw
-    OPENCLAW_CONFIG="${HOME}/.openclaw/openclaw.json"
-
-    if [ -f "$OPENCLAW_CONFIG" ]; then
-        print_step "配置 OpenClaw..."
-
-        # 檢查是否已配置
-        if grep -q '"soul-memory"' "$OPENCLAW_CONFIG"; then
-            print_success "OpenClaw 已配置 soul-memory"
-        else
-            print_warning "需要手動配置 OpenClaw（以下命令）:"
-            echo ""
-            echo -e "${YELLOW}在 ~/.openclaw/openclaw.json 的 plugins.entries 中添加：${NC}"
-            echo ""
-            echo '  "soul-memory": {'
-            echo '    "enabled": true,'
-            echo '    "config": {'
-            echo '      "enabled": true,'
-            echo '      "topK": 5,'
-            echo '      "minScore": 0.0'
-            echo '    }'
-            echo '  }'
-            echo ""
-            echo -e "${YELLOW}然後重啟 Gateway：${NC}"
-            echo '  openclaw gateway restart'
-            echo ""
-        fi
-    fi
-
-    print_success "OpenClaw Plugin 配置完成"
+    print_success "OpenClaw Plugin v0.1.1 配置完成"
 }
 
 setup_environment() {
@@ -534,7 +613,7 @@ setup_environment() {
         if ! grep -q "SOUL_MEMORY_PATH" "$SHELL_RC"; then
             cat >> "$SHELL_RC" << EOF
 
-# Soul Memory System v3.2.2
+# Soul Memory System v3.3
 export SOUL_MEMORY_PATH="$INSTALL_PATH"
 export PYTHONPATH="\${SOUL_MEMORY_PATH}:\${PYTHONPATH}"
 EOF
@@ -551,13 +630,14 @@ verify_installation() {
 
     cd "$INSTALL_PATH"
 
-    # 檢查 v3.2.2 核心文件
+    # 檢查 v3.3 核心文件
     REQUIRED_FILES=(
         "core.py"
         "cli.py"
         "heartbeat-trigger.py"
         "dedup_hashes.json"
         "README.md"
+        "V3_3_UPGRADE.md"
     )
 
     ALL_EXIST=true
@@ -570,9 +650,26 @@ verify_installation() {
         fi
     done
 
-    # 檢查 modules
+    # 檢查 v3.3 新模組
     echo ""
-    echo "Check modules:"
+    echo "v3.3 新模組:"
+    V33_MODULES=(
+        "modules/keyword_mapping.py"
+        "modules/semantic_dedup.py"
+        "modules/tag_index.py"
+    )
+
+    for file in "${V33_MODULES[@]}"; do
+        if [ -f "$file" ] || [ -f "$file"_v3_3.py ]; then
+            echo -e "${GREEN}  ✓${NC} $(basename $file)"
+        else
+            echo -e "${YELLOW}  ⚠️ ${NC} $(basename $file) (可選)"
+        fi
+    done
+
+    # 檢查模組
+    echo ""
+    echo "核心模組:"
     MODULE_FILES=(
         "modules/priority_parser.py"
         "modules/vector_search.py"
@@ -610,18 +707,18 @@ print_summary() {
     echo ""
     echo -e "${BLUE}╔════════════════════════════════════════════════════════════════╗${NC}"
     echo -e "${BLUE}║                    ✅ 安裝完成                                ║${NC}"
-    echo -e "${BLUE}║              Soul Memory System v3.2.2                       ║${NC}"
-    echo -e "${BLUE}║           + OpenClaw Plugin v0.1.0 beta                     ║${NC}"
+    echo -e "${BLUE}║              Soul Memory System v3.3                         ║${NC}"
+    echo -e "${BLUE}║           + OpenClaw Plugin v0.1.1                           ║${NC}"
     echo -e "${BLUE}╚════════════════════════════════════════════════════════════════╝${NC}"
     echo ""
     echo -e "${GREEN}📍 安裝位置:${NC} $INSTALL_PATH"
     echo -e "${GREEN}📦 OpenClaw Plugin:${NC} ~/.openclaw/extensions/soul-memory"
     echo ""
-    echo -e "${GREEN}🎯 v3.2.2 新功能:${NC}"
-    echo "  • CLI 接口（純 JSON 輸出）"
-    echo "  • Heartbeat v3.2.2 寬鬆模式（降低識別閾值）"
-    echo "  • MD5 哈希去重機制（防止重複保存）"
-    echo "  • OpenClaw Plugin（before_prompt_build Hook）"
+    echo -e "${GREEN}🎯 v3.3 新功能:${NC}"
+    echo "  • 分層關鍵詞字典（三級權重系統：10/7/3）"
+    echo "  • 語意相似度去重（difflib, threshold=0.85）"
+    echo "  • 多標籤索引系統"
+    echo "  • 通用 Schema（無硬編碼特定字眼）"
     echo ""
     echo -e "${GREEN}📋 後續步驟:${NC}"
     echo ""
@@ -635,8 +732,11 @@ print_summary() {
     echo "3. 測試 Heartbeat:"
     echo -e "   ${YELLOW}python3 $INSTALL_PATH/heartbeat-trigger.py${NC}"
     echo ""
+    echo "4. 重建記憶索引（如果升級後舊索引不準確）:"
+    echo -e "   ${YELLOW}python3 $INSTALL_PATH/rebuild_index.py${NC}"
+    echo ""
     if [ "$INSTALL_PLUGIN" = true ]; then
-        echo "4. 配置 OpenClaw（如果尚未配置）:"
+        echo "5. 配置 OpenClaw（如果尚未配置）:"
         echo "   在 ~/.openclaw/openclaw.json 的 plugins.entries 中添加:"
         echo "   "
         echo '   "soul-memory": {'
@@ -644,16 +744,18 @@ print_summary() {
         echo '     "config": {'
         echo '       "enabled": true,'
         echo '       "topK": 5,'
-        echo '       "minScore": 0.0'
+        echo '       "minScore": 0.0,'
+        echo '       "multiTagSearch": true'
         echo '     }'
         echo '   }'
         echo ""
-        echo "5. 重啟 OpenClaw Gateway:"
+        echo "6. 重啟 OpenClaw Gateway:"
         echo -e "   ${YELLOW}openclaw gateway restart${NC}"
         echo ""
     fi
     echo -e "${GREEN}📚 文檔:${NC}"
     echo -e "   ${YELLOW}$INSTALL_PATH/README.md${NC}"
+    echo -e "   ${YELLOW}$INSTALL_PATH/V3_3_UPGRADE.md${NC}"
     echo ""
 }
 
@@ -685,14 +787,20 @@ main() {
         run_tests
     fi
 
-    setup_heartbeat_v32
+    setup_heartbeat_v33
     setup_openclaw_plugin
     setup_environment
+
+    # 索引自動重建
+    if [ "$REBUILD_INDEX" = true ]; then
+        rebuild_memory_index
+    fi
+
     verify_installation
 
     print_summary
 
-    print_success "Soul Memory System v3.2.2 安裝完成！"
+    print_success "Soul Memory System v3.3 安裝完成！"
 }
 
 main "$@"

@@ -1,10 +1,10 @@
 /**
  * Soul Memory Web UI - JavaScript
- * Version 1.0.0
+ * Version 3.3.2
  */
 
 // API Base URL
-const API_BASE = '/api';
+const API_BASE = 'api';
 
 // State
 let state = {
@@ -17,6 +17,8 @@ let state = {
 document.addEventListener('DOMContentLoaded', () => {
     console.log('🧠 Soul Memory Web UI initialized');
     loadStats();
+    loadCleanupMetrics();
+    loadFileMetrics();
     refreshTasks();
     updateTimestamp();
     
@@ -27,6 +29,8 @@ document.addEventListener('DOMContentLoaded', () => {
     
     setInterval(() => {
         loadStats();
+        loadCleanupMetrics();
+        loadFileMetrics();
         updateTimestamp();
     }, 30000);
 });
@@ -129,7 +133,8 @@ async function doSearch() {
     resultsDiv.innerHTML = '<p class="placeholder-text">🔍 Searching...</p>';
     
     try {
-        const data = await fetchAPI(`/search?q=${encodeURIComponent(query)}&top_k=10`);
+        const topK = document.getElementById("top-k")?.value || 10;
+        const data = await fetchAPI(`/search?q=${encodeURIComponent(query)}&top_k=${topK}`);
         state.searchResults = data.results;
         displaySearchResults(data);
     } catch (error) {
@@ -234,4 +239,45 @@ function escapeHtml(text) {
     const div = document.createElement('div');
     div.textContent = text;
     return div.innerHTML;
+}
+
+// ============ v3.3.2 Monitoring ============
+async function loadCleanupMetrics() {
+    try {
+        const data = await fetchAPI('/metrics/cleanup');
+        const status = document.getElementById('cleanup-status');
+        const mentions = document.getElementById('heartbeat-mentions');
+        if (status) status.textContent = data.status === 'clean' ? '✅ Clean' : '⚠️ Attention';
+        if (mentions) mentions.textContent = data.heartbeat_mentions ?? '-';
+    } catch (e) {
+        // ignore
+    }
+}
+
+async function loadFileMetrics() {
+    try {
+        const data = await fetchAPI('/metrics/files');
+        const lineEl = document.getElementById('today-lines');
+        const sizeEl = document.getElementById('today-size');
+        const files = data.today_files || [];
+        const lines = files.reduce((a, f) => a + (f.lines || 0), 0);
+        const bytes = files.reduce((a, f) => a + (f.bytes || 0), 0);
+
+        if (lineEl) {
+            lineEl.textContent = lines;
+            lineEl.classList.remove('warn', 'danger');
+            if (lines > 500) lineEl.classList.add('danger');
+            else if (lines > 400) lineEl.classList.add('warn');
+        }
+
+        if (sizeEl) {
+            const kb = bytes / 1024;
+            sizeEl.textContent = kb.toFixed(1);
+            sizeEl.classList.remove('warn', 'danger');
+            if (kb > 50) sizeEl.classList.add('danger');
+            else if (kb > 40) sizeEl.classList.add('warn');
+        }
+    } catch (e) {
+        // ignore
+    }
 }
