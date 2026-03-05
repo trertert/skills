@@ -3,11 +3,16 @@
   "slug": "aubrai-longevity",
   "displayName": "Aubrai Longevity Research",
   "latest": {
-    "version": "1.0.17",
-    "publishedAt": 1770774040165,
-    "commit": "https://github.com/openclaw/skills/commit/09d236d3a8290fa53753df8f631b737b2025a38b"
+    "version": "1.0.19",
+    "publishedAt": 1772551196471,
+    "commit": null
   },
   "history": [
+    {
+      "version": "1.0.17",
+      "publishedAt": 1770774040165,
+      "commit": "https://github.com/openclaw/skills/commit/09d236d3a8290fa53753df8f631b737b2025a38b"
+    },
     {
       "version": "1.0.8",
       "publishedAt": 1770678345474,
