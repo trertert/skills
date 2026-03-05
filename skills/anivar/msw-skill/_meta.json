@@ -1,0 +1,11 @@
+{
+  "owner": "anivar",
+  "slug": "msw-skill",
+  "displayName": "MSW (Mock Service Worker)",
+  "latest": {
+    "version": "1.0.1",
+    "publishedAt": 1772684727962,
+    "commit": null
+  },
+  "history": []
+}
