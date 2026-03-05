@@ -1,0 +1,11 @@
+{
+  "owner": "skillhq-ai",
+  "slug": "flight-search-fast",
+  "displayName": "Google Flights",
+  "latest": {
+    "version": "1.0.1",
+    "publishedAt": 1772618491615,
+    "commit": null
+  },
+  "history": []
+}
