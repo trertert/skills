@@ -1,0 +1,11 @@
+{
+  "owner": "oscraters",
+  "slug": "kraken-cli",
+  "displayName": "Kraken CLI",
+  "latest": {
+    "version": "1.0.0",
+    "publishedAt": 1772654146297,
+    "commit": null
+  },
+  "history": []
+}
