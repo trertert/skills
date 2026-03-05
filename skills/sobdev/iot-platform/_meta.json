@@ -1,0 +1,11 @@
+{
+  "owner": "sobdev",
+  "slug": "iot-platform",
+  "displayName": "IoT Platform Connection",
+  "latest": {
+    "version": "1.0.1",
+    "publishedAt": 1772635588875,
+    "commit": null
+  },
+  "history": []
+}
