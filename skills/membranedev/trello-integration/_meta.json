@@ -1,0 +1,11 @@
+{
+  "owner": "membranedev",
+  "slug": "trello-integration",
+  "displayName": "Trello",
+  "latest": {
+    "version": "1.0.0",
+    "publishedAt": 1772694142700,
+    "commit": null
+  },
+  "history": []
+}
