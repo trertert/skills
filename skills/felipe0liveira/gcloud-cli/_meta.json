@@ -1,0 +1,11 @@
+{
+  "owner": "felipe0liveira",
+  "slug": "gcloud-cli",
+  "displayName": "Google Cloud CLI",
+  "latest": {
+    "version": "1.0.0",
+    "publishedAt": 1772822763092,
+    "commit": null
+  },
+  "history": []
+}
