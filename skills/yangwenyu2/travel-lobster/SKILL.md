@@ -1,6 +1,8 @@
 ---
 name: travel-lobster
 description: Autonomous internet exploration skill. Your agent roams the web driven by its own curiosity, discovers interesting things, and sends illustrated "postcards" — personal letters with AI-generated art — to a chat. Features persistent travel memory with knowledge graph, curiosity seeds, growth tracking, time-aware tone, and self-scheduling random-interval trips. Inspired by "Travel Frog" (旅行青蛙). Activate when user asks to explore the internet autonomously, send postcards, discover interesting things, or be a "travel frog/lobster".
+env:
+  - OPENROUTER_API_KEY
 ---
 
 # Travel Lobster 🦞✉️
@@ -124,11 +126,26 @@ travel-lobster/
     └── travel-prompt.md          ← Agent prompt template
 ```
 
+## Requirements
+
+| Dependency | Purpose |
+|-----------|---------|
+| `OPENROUTER_API_KEY` env var | Image generation via Gemini Flash |
+| OpenClaw cron | Self-scheduling trip loop |
+| `envsubst` (gettext) | Template variable substitution |
+
+Set your API key before starting:
+```bash
+export OPENROUTER_API_KEY=your_key_here
+```
+
 ## Security
 
-- API keys read at runtime only, never logged or embedded in prompts
-- Variable substitution uses `envsubst` (safe against injection)
-- All file operations within workspace directory
-- Error messages sanitized (no auth info in output)
-- `.gitignore` excludes runtime config and user data
-- Watchdog can only restart the loop, cannot modify skill or escalate
+- **Credentials**: Only `OPENROUTER_API_KEY` env var is used, declared in frontmatter above. The skill never scans config files, never logs keys, never embeds them in prompts
+- **Network scope**: Prompt explicitly restricts the agent to public websites only — private/internal IPs (10.x, 172.16-31.x, 192.168.x, localhost) are forbidden. For stronger guarantees, use network-level egress controls
+- **File access**: All reads/writes are within the skill's workspace directory only. Files created: `memory/travel-journal.md` (postcard archive), `.travel-config` (chat target + agent name), `logs/travel-lobster.log`. No system files or other workspace files are modified
+- **Variable substitution**: Uses `envsubst` (not `sed`/`eval`) to prevent shell injection
+- **Error handling**: All error messages are sanitized — only error types are printed, never auth tokens, API responses, or headers
+- **Persistence**: The skill creates `openclaw cron` one-shot jobs (self-loop) and a watchdog that can only restart the loop. It does not set `always: true`, does not modify system config, and does not escalate privileges
+- **Isolation**: `.gitignore` excludes all runtime data (`.travel-config`, `memory/`, `logs/`, `*.png`). Published package contains no user data
+- **Recommended**: Run first few trips manually to verify behavior before enabling the full self-scheduling loop

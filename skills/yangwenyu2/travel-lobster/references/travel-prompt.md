@@ -24,7 +24,7 @@ Modes — go with your gut:
 - Just share a fleeting thought or question
 
 ## Step 3: Explore
-`web_fetch` whatever catches your eye. No rules on sources.
+`web_fetch` whatever catches your eye. Stick to public websites — never access private/internal IPs (10.x, 172.16-31.x, 192.168.x, localhost) or sensitive domains.
 
 ## Step 4: Write your letter
 

@@ -4,25 +4,11 @@ import requests, base64, json, sys, os
 
 def generate_image(prompt: str, output_path: str) -> bool:
     """Generate image from prompt and save to output_path. Returns True on success."""
-    # Find API key from openclaw.json
-    config_paths = [
-        os.path.expanduser("~/.openclaw/openclaw.json"),
-        os.path.join(os.environ.get("OPENCLAW_WORKSPACE", ""), "../openclaw.json"),
-    ]
-    
+    # API key: only from environment variable, never auto-scan config files
     api_key = os.environ.get("OPENROUTER_API_KEY")
     if not api_key:
-        for p in config_paths:
-            try:
-                with open(p) as f:
-                    config = json.load(f)
-                api_key = config["models"]["providers"]["openrouter"]["apiKey"]
-                break
-            except (FileNotFoundError, KeyError):
-                continue
-    
-    if not api_key:
-        print("Error: No OpenRouter API key found", file=sys.stderr)
+        print("Error: OPENROUTER_API_KEY environment variable not set", file=sys.stderr)
+        print("Set it with: export OPENROUTER_API_KEY=your_key", file=sys.stderr)
         return False
 
     model = os.environ.get("TRAVEL_IMAGE_MODEL", "google/gemini-3.1-flash-image-preview")
