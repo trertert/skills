@@ -3,9 +3,15 @@
   "slug": "openclaw-health-audit",
   "displayName": "Openclaw Health Audit",
   "latest": {
-    "version": "1.0.0",
-    "publishedAt": 1772712759883,
-    "commit": "https://github.com/openclaw/skills/commit/94eede0f70d3ab7076e4b88a68ea434fd31570a9"
+    "version": "1.4.0",
+    "publishedAt": 1772798072198,
+    "commit": null
   },
-  "history": []
+  "history": [
+    {
+      "version": "1.0.0",
+      "publishedAt": 1772712759883,
+      "commit": "https://github.com/openclaw/skills/commit/94eede0f70d3ab7076e4b88a68ea434fd31570a9"
+    }
+  ]
 }

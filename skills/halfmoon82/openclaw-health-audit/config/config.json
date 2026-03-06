@@ -1,5 +1,5 @@
 {
-  "version": "1.0",
+  "version": "1.4",
   "generated_at": "2026-03-05 auto-test",
   "prompt_files": {
     "SOUL.md": {
@@ -53,7 +53,9 @@
     "cron_jobs": true,
     "orphan_sessions": true,
     "token_trend": true,
-    "cache_config": true
+    "cache_config": true,
+    "code_integrity": true,
+    "session_integrity": true
   },
   "cache_config": {
     "message_injector_path": "/Users/macmini/.openclaw/workspace/.openclaw/extensions/message-injector/index.ts",

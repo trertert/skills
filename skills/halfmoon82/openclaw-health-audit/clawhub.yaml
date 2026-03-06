@@ -1,10 +1,11 @@
 name: openclaw-health-audit
-version: 1.0.0
+version: 1.4.0
 description: |
-  OpenClaw 系统健康审计与自动修复 Skill。
-  监控 System Prompt 体积漂移、Cron Job 违规、孤儿 Session 积累、Token 消耗趋势。
+  OpenClaw 系统健康审计与自动修复 Skill（v1.4.0）。
+  三层 7 分类监控：System Prompt 体积漂移(A)、Cron Job 合规(B)、孤儿Session(C)、
+  Token 消耗趋势(D)、LLM 缓存配置完整性(E)、Session 状态完整性(F)、
+  代码完整性 FIX-0~4 合规检查 G1-G8(G)。
   首次运行向导自动测量基线并生成个性化配置，注册 48h 定期检查任务。
-  可选 Category E：配合 semantic-router M1/M3 补丁监控 LLM 缓存配置完整性。
 author: halfmoon82
 tags:
   - health
