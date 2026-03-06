@@ -48,22 +48,25 @@ The number of directors shall be fixed from time to time by resolution of the Bo
 ### Section 3.3 — Election and Term
 Directors shall be elected at each annual meeting of stockholders and shall hold office until the next annual meeting and until their successors are elected and qualified.
 
-### Section 3.4 — Vacancies
-Any vacancy occurring in the Board of Directors may be filled by the affirmative vote of a majority of the remaining directors.
+### Section 3.4 — Removal
+Any director may be removed, with or without cause, by the holders of a majority of the voting power of the issued and outstanding stock entitled to vote at an election of directors.
 
-### Section 3.5 — Regular Meetings
+### Section 3.5 — Vacancies
+Any vacancy occurring in the Board of Directors (whether by removal, resignation, death, or newly created directorship) may be filled by the affirmative vote of a majority of the remaining directors, even if less than a quorum.
+
+### Section 3.6 — Regular Meetings
 Regular meetings of the Board of Directors may be held at such time and place as determined by the Board.
 
-### Section 3.6 — Special Meetings
+### Section 3.7 — Special Meetings
 Special meetings of the Board of Directors may be called by the Chairman, the President, or any two directors.
 
-### Section 3.7 — Quorum
+### Section 3.8 — Quorum
 A majority of the total number of directors shall constitute a quorum for the transaction of business.
 
-### Section 3.8 — Action Without Meeting
+### Section 3.9 — Action Without Meeting
 Any action required or permitted to be taken at any meeting of the Board of Directors may be taken without a meeting if all members of the Board consent thereto in writing.
 
-### Section 3.9 — Compensation
+### Section 3.10 — Compensation
 Directors may receive compensation for their services as determined by resolution of the Board.
 
 ## ARTICLE IV — OFFICERS

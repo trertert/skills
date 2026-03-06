@@ -700,6 +700,111 @@ def gen_checklist(cfg, output_dir):
     return path
 
 
+def gen_83b_election(cfg, output_dir):
+    doc = create_doc()
+    co = cfg['company_name']
+    state = cfg['state']
+    filing_date = cfg.get('filing_date', 'TBD')
+    filing_year = filing_date[:4] if filing_date and filing_date != 'TBD' else '20__'
+    stock = cfg.get('stock', {})
+    vesting = cfg.get('options', {})
+    vesting_period = vesting.get('vesting_period', '4 years')
+    cliff_period = vesting.get('cliff_period', '1 year')
+    par_value = stock.get('common', {}).get('par_value', '0.00001')
+
+    add_heading(doc, "SECTION 83(b) ELECTION")
+    add_para(doc, f"For stockholders of {co}", italic=True, align=WD_ALIGN_PARAGRAPH.CENTER)
+    doc.add_paragraph()
+
+    add_heading(doc, "INSTRUCTIONS", level=2)
+    instructions = [
+        f"TIMING: This election MUST be filed with the IRS within 30 days after stock is transferred (issued). There are NO extensions. Missing this deadline is irreversible.",
+        f"WHERE TO FILE: Mail the completed, signed election to the IRS Service Center where you file your federal income tax return. Send via certified mail, return receipt requested.",
+        f"COPIES: Provide a copy to {co}. Keep a copy for your personal records.",
+        f"TAX RETURN: Attach a copy of this election to your federal income tax return for the year of transfer.",
+        f"WHY THIS MATTERS: Without 83(b), you will be taxed on fair market value of shares as they vest (potentially much higher). With 83(b), you are taxed on value at issuance (par value = ${par_value}/share = essentially $0).",
+    ]
+    for i, inst in enumerate(instructions):
+        add_para(doc, f"{i+1}. {inst}")
+
+    doc.add_paragraph()
+    add_heading(doc, "ELECTION FORM", level=2)
+    add_para(doc, "The undersigned taxpayer hereby elects, pursuant to Section 83(b) of the Internal Revenue Code of 1986, as amended, to include in gross income as compensation for services the excess (if any) of the fair market value of the property described below over the amount paid for such property.")
+    doc.add_paragraph()
+
+    fields = [
+        ("1. TAXPAYER INFORMATION:", [
+            "Name: _________________________________",
+            "Address: _________________________________",
+            "Social Security Number: _________________________________",
+            f"Tax Year: Calendar year {filing_year}",
+        ]),
+        ("2. DESCRIPTION OF PROPERTY:", [
+            f"_____________ shares of Common Stock of {co}, a {state} corporation",
+        ]),
+        ("3. DATE OF TRANSFER:", [
+            f"{filing_date} (the date of issuance per the Organizational Resolutions)",
+        ]),
+        ("4. NATURE OF RESTRICTION:", [
+            f"The shares are subject to a Restricted Stock Purchase Agreement with a {vesting_period} vesting schedule and {cliff_period} cliff. Unvested shares are subject to repurchase by the Corporation at par value (${par_value} per share) upon termination of service.",
+        ]),
+        ("5. FAIR MARKET VALUE AT TIME OF TRANSFER:", [
+            f"${par_value} per share (par value). The Corporation is newly formed and has no operations, revenue, or assets beyond its initial capitalization.",
+            "Total fair market value: $_____________ (number of shares × $" + par_value + ")",
+        ]),
+        ("6. AMOUNT PAID FOR PROPERTY:", [
+            "$0.00 (shares were issued in exchange for services to be rendered)",
+        ]),
+        ("7. AMOUNT TO INCLUDE IN GROSS INCOME:", [
+            "$_____________ (fair market value minus amount paid = essentially $0)",
+        ]),
+    ]
+
+    for title, items in fields:
+        add_para(doc, title, bold=True)
+        for item in items:
+            add_para(doc, f"   {item}")
+
+    add_para(doc, f"8. A copy of this election has been furnished to {co}.", bold=True)
+    add_para(doc, f"9. This election is being made in connection with the initial issuance of restricted stock by {co}.", bold=True)
+
+    doc.add_paragraph()
+    add_para(doc, "Date: _________________________________")
+    add_para(doc, "Signature: _________________________________")
+    add_para(doc, "Print Name: _________________________________")
+    add_para(doc, "Spouse Signature (if applicable): _________________________________")
+
+    doc.add_paragraph()
+    add_heading(doc, "FILING CHECKLIST", level=2)
+    checklist = [
+        "Complete the election form (fill in all blanks)",
+        "Sign and date",
+        "Make 4 copies of the signed election",
+        "Mail original to IRS Service Center via CERTIFIED MAIL, RETURN RECEIPT REQUESTED",
+        "Keep the certified mail receipt as proof of timely filing",
+        f"Give one copy to the Secretary of {co}",
+        "Keep one copy for personal tax records",
+        f"Attach one copy to {filing_year} federal income tax return when filed",
+    ]
+    for item in checklist:
+        add_para(doc, f"☐  {item}")
+
+    doc.add_paragraph()
+    fd_text, _ = val_or_highlight(filing_date)
+    p = add_para(doc, "")
+    run = p.add_run(f"CRITICAL DEADLINE: Must be postmarked within 30 days of stock issuance date ({fd_text}).")
+    run.font.name = 'Times New Roman'
+    run.font.size = Pt(11)
+    run.font.color.rgb = BLACK
+    run.bold = True
+    add_highlight(run)
+
+    path = output_dir / "07 - 83b Election Form.docx"
+    doc.save(str(path))
+    print(f"  ✅ {path.name}")
+    return path
+
+
 def main():
     parser = argparse.ArgumentParser(description="Generate incorporation documents from config")
     parser.add_argument("config", help="Path to YAML config file")
@@ -722,7 +827,18 @@ def main():
     gen_stock_ledger(cfg, output_dir)
     gen_checklist(cfg, output_dir)
 
-    print(f"\n✅ All 6 documents generated in {output_dir}/")
+    # Generate 83(b) if stock is issued for services
+    shareholders = cfg.get('shareholders', {})
+    has_services = any(
+        h.get('consideration', cfg.get('options', {}).get('consideration_default', '')).lower() == 'services'
+        for holders in shareholders.values()
+        for h in holders
+    )
+    if has_services:
+        gen_83b_election(cfg, output_dir)
+        print(f"\n⚠️  83(b) election generated — stockholders must file within 30 DAYS of stock issuance!")
+
+    print(f"\n✅ All documents generated in {output_dir}/")
     print("   Review yellow-highlighted fields for any items needing manual input.")
 
 

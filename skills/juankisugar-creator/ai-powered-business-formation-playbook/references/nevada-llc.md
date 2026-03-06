@@ -28,22 +28,24 @@ Nevada Revised Statutes (NRS) Chapter 86 — Limited-Liability Companies
 4. Pay filing fee online
 5. Save filed copy and note Entity Number
 
-### Filing Fees
+### Filing Fees (Updated March 2026)
 | Item | Cost | When |
 |------|------|------|
-| Articles of Organization | ~$75 | At filing |
-| Initial List of Managers/Members + Business License | ~$350 | Within 30 days |
+| Articles of Organization | $75 | At filing |
+| Initial List of Managers/Members | $150 | Within 30 days (bundled at filing) |
+| State Business License | $500 | Bundled with Initial List |
+| CC Processing Fee | 2.5% | If paying by credit card |
 | Registered Agent (annual) | ~$100-150 | Annual |
 | EIN | Free | After formation |
-| **Total to form** | **~$525-575** | |
+| **Total to form** | **~$725-775 + CC fee** | |
 
 ### Annual Requirements
 | Item | Cost | When |
 |------|------|------|
 | Annual List of Managers/Members | ~$150 | Anniversary of formation |
-| Business License Renewal | ~$200 | Anniversary of formation |
+| Business License Renewal | ~$500 | Anniversary of formation |
 | Registered Agent | ~$100-150 | Annual |
-| **Annual Total** | **~$450-500** | |
+| **Annual Total** | **~$750-800** | |
 
 ## Nevada LLC Advantages
 - No state income tax (personal or corporate)

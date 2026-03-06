@@ -38,6 +38,12 @@ The undersigned, constituting the entire Board of Directors of {{COMPANY_NAME}} 
 
 {{/EACH}}
 
+## RESTRICTED STOCK PURCHASE AGREEMENTS
+
+**RESOLVED**, that the Corporation is authorized and directed to enter into Restricted Stock Purchase Agreements ("RSPAs") with each stockholder receiving shares in exchange for services, substantially in the form presented to the Board, and that the officers of the Corporation are authorized to execute such agreements on behalf of the Corporation.
+
+**RESOLVED**, that each RSPA shall include the vesting schedule, repurchase provisions, transfer restrictions, and acceleration terms as approved by the Board, and that the Secretary shall maintain a copy of each executed RSPA with the corporate records.
+
 ## BANKING
 
 **RESOLVED**, that the officers of the Corporation are authorized to open one or more bank accounts in the name of the Corporation at such banking institutions as the officers may select, and that any officer is authorized to sign checks, drafts, and other orders for the payment of money drawn on such accounts.

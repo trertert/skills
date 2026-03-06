@@ -51,11 +51,11 @@ stock:
     - class_name: "Series A Super Voting Preferred"
       authorized: 1000000
       par_value: 0.00001
-      voting_rights: 20                    # Votes per share (e.g., 20:1 super voting)
+      voting_rights: 100                   # Votes per share (e.g., 100:1 super voting)
       convertible: false
       dividends: false
       # Add any special rights/restrictions:
-      notes: "Non-convertible, no dividends, 20:1 voting"
+      notes: "Non-convertible, no dividends, 100:1 voting"
 
 # === MEMBERSHIP STRUCTURE (LLC) ===
 # Use this instead of stock section for LLCs
@@ -73,6 +73,21 @@ stock:
 #   managers:                              # Only if manager-managed
 #     - name: "Jane Smith"
 #       title: "Manager"
+
+# === VESTING ===
+vesting:
+  period: "4 years"                        # Total vesting period
+  cliff: "1 year"                          # Time before first shares vest
+  acceleration: "double-trigger"           # none | single-trigger | double-trigger
+  # none = no acceleration on change of control
+  # single-trigger = 100% vests on acquisition
+  # double-trigger = 100% vests if terminated within 12mo post-acquisition (RECOMMENDED)
+
+# === OPTION POOL / RESERVED SHARES ===
+option_pool:
+  shares: 100000                           # Shares reserved for future employees/advisors
+  percentage: "1.00%"                      # Of total authorized common
+  notes: "Standard startup range: 10-20%. Carve out before issuing founder shares."
 
 # === CAP TABLE ===
 # List all shareholders with their allocations
