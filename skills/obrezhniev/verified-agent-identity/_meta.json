@@ -3,11 +3,16 @@
   "slug": "verified-agent-identity",
   "displayName": "Verified Agent Identity",
   "latest": {
-    "version": "0.0.2",
-    "publishedAt": 1772537183523,
-    "commit": "https://github.com/openclaw/skills/commit/086d2126d74b00caf6b06ea9ef03c435b3253097"
+    "version": "0.0.7",
+    "publishedAt": 1772648736710,
+    "commit": null
   },
   "history": [
+    {
+      "version": "0.0.2",
+      "publishedAt": 1772537183523,
+      "commit": "https://github.com/openclaw/skills/commit/086d2126d74b00caf6b06ea9ef03c435b3253097"
+    },
     {
       "version": "0.0.1",
       "publishedAt": 1771602583716,
