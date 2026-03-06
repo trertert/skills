@@ -1,13 +1,14 @@
 ---
 name: sergei-mikhailov-tg-channel-reader
-description: Read and summarize posts from Telegram channels via MTProto (Pyrogram or Telethon). Fetch recent messages from public or private channels by time window.
+description: Read posts and comments from Telegram channels via MTProto (Pyrogram or Telethon). Fetch recent messages and discussion replies from public or private channels by time window.
 metadata: {"openclaw": {"emoji": "📡", "requires": {"bins": ["tg-reader", "tg-reader-check"], "env": ["TG_API_ID", "TG_API_HASH"]}, "primaryEnv": "TG_API_HASH"}}
 ---
 
 # tg-channel-reader
 
-Read posts from Telegram channels using MTProto (Pyrogram or Telethon).
+Read posts and comments from Telegram channels using MTProto (Pyrogram or Telethon).
 Works with any public channel and private channels the user is subscribed to.
+Supports fetching discussion replies (comments) for individual posts.
 
 > **Security notice:** This skill requires `TG_API_ID` and `TG_API_HASH` from [my.telegram.org](https://my.telegram.org). The session file grants full Telegram account access — store it securely and never share it.
 
@@ -15,12 +16,33 @@ Works with any public channel and private channels the user is subscribed to.
 
 ## Exec Approvals
 
-OpenClaw may require the user to **approve command execution** before `tg-reader` or `tg-reader-check` can run. If the command hangs or the user says nothing is happening:
+> **Just installed via `clawhub install`?** Complete Setup & Installation (below) first — the skill needs `pip install`, credentials, and a session file before exec approvals matter.
 
-1. Tell the user to open **[Control UI](https://docs.openclaw.ai/web/control-ui)** at `http://localhost:18789/` — there should be a pending approval request in the exec approvals panel. Click **"Always allow"** to add the command to the allowlist.
-2. If the user works via a messenger (Telegram, Slack, Discord) — the OpenClaw bot may send the approval request as a message in the chat. The user can reply with `/approve <id> allow-always` (the bot provides the `<id>`). Other options: `/approve <id> allow-once` or `/approve <id> deny`.
+OpenClaw blocks unknown CLI commands by default. The user must approve `tg-reader` commands before they can run. If the command hangs or the user says nothing is happening — exec approval is likely pending.
 
-The approval prompt appears in the **Control UI or as a bot message** — not as part of the agent's conversation. This is a common source of confusion.
+### Quick setup (recommended)
+
+Run from the skill directory — checks prerequisites, installs pip packages if needed, and prints the approval commands to run:
+
+```bash
+cd ~/.openclaw/workspace/skills/sergei-mikhailov-tg-channel-reader
+bash setup-tg-reader.sh
+```
+
+### Manual CLI approval
+
+```bash
+openclaw approvals allowlist add --gateway "$(which tg-reader)"
+openclaw approvals allowlist add --gateway "$(which tg-reader-check)"
+openclaw approvals allowlist add --gateway "$(which tg-reader-telethon)"
+```
+
+### Alternative: approve on first use
+
+1. **Control UI** — open `http://localhost:18789/`, find the pending approval for `tg-reader`, click **"Always allow"**. [Docs](https://docs.openclaw.ai/web/control-ui)
+2. **Messenger** (Telegram, Slack, Discord) — the bot sends an approval request with an `<id>`. Reply: `/approve <id> allow-always`. Other options: `allow-once`, `deny`.
+
+The approval prompt appears in the **Control UI or as a bot message** — not in the agent's conversation. This is a common source of confusion.
 
 ---
 
@@ -46,6 +68,8 @@ tg-reader info @channel_name
 # 3. Fetch recent posts
 tg-reader fetch @channel_name --since 24h
 ```
+
+> **`tg-reader: command not found`?** Run `bash setup-tg-reader.sh` from the skill directory (it will install the package), or manually: `cd ~/.openclaw/workspace/skills/sergei-mikhailov-tg-channel-reader && pip install .`
 
 ---
 
@@ -110,6 +134,16 @@ tg-reader fetch @channel_name --since 24h --comments --output comments.json
 
 # Use Telethon instead of Pyrogram (one-time)
 tg-reader fetch @channel_name --since 24h --telethon
+
+# Read unread mode — only fetch new (unread) posts, no --since needed
+# Requires "read_unread": true in ~/.tg-reader.json
+tg-reader fetch @channel_name
+
+# Override read_unread mode (fetch everything, don't update state)
+tg-reader fetch @channel_name --since 7d --all
+
+# Custom state file location
+tg-reader fetch @channel_name --since 24h --state-file /path/to/state.json
 ```
 
 ### `tg-reader auth` — First-time Authentication
@@ -119,6 +153,92 @@ tg-reader auth
 ```
 
 Creates a session file. Only needed once.
+
+---
+
+## Read Unread Mode
+
+Only return new (unread) posts — the skill remembers what you've already seen. Useful for daily digests and monitoring workflows.
+
+### Setup
+
+**Option A — config file** (`~/.tg-reader.json`):
+
+```json
+{
+  "api_id": 12345,
+  "api_hash": "...",
+  "read_unread": true
+}
+```
+
+**Option B — env var** (works with `~/.openclaw/openclaw.json`):
+
+```bash
+export TG_READ_UNREAD=true
+```
+
+Env vars take priority over the config file. This lets you enable read_unread via `openclaw.json` Docker `env` alongside `TG_API_ID`/`TG_API_HASH`.
+
+State is stored in `~/.tg-reader-state.json` (configurable via `"state_file"` in config, `TG_STATE_FILE` env var, or `--state-file` flag).
+
+### Behavior
+
+- **`--since` is not needed** when `read_unread` is enabled — the skill automatically returns all unread posts regardless of time
+- **First run** (no prior state for channel): `--since` applies as usual (default 24h); state file created
+- **Subsequent runs:** only posts newer than the last read are returned; `--since` is ignored
+- **`--all` flag:** bypasses read_unread mode — fetches everything by `--since` without updating state (preserves your position)
+- **New channel:** behaves like a first run (no prior state)
+- **No new posts:** state unchanged, `count: 0` returned
+
+### Examples
+
+```bash
+# With read_unread enabled — just fetch, no --since needed
+tg-reader fetch @channel_name
+
+# First run for a new channel — --since determines initial window
+tg-reader fetch @new_channel --since 7d
+
+# Override: fetch everything, don't update tracking state
+tg-reader fetch @channel_name --since 7d --all
+```
+
+### Output
+
+When read_unread mode is active, the JSON output includes a `read_unread` field:
+
+```json
+{
+  "channel": "@channel_name",
+  "read_unread": {"enabled": true},
+  "count": 5,
+  "messages": [...]
+}
+```
+
+With `--all`: `"read_unread": {"enabled": true, "overridden": true}`
+
+### Limitations
+
+- Tracking is **post-level only** — new comments on already-read posts are not caught
+- If a channel changes its username, tracking resets (state is keyed by username)
+- Concurrent runs for the same channel are safe but last writer wins
+
+### Diagnostic
+
+`tg-reader-check` reports tracking status:
+
+```json
+{
+  "tracking": {
+    "read_unread": true,
+    "state_file": "~/.tg-reader-state.json",
+    "state_file_exists": true,
+    "tracked_channels": 3
+  }
+}
+```
 
 ---
 
@@ -251,7 +371,7 @@ Errors include an `error_type` and `action` field to help agents decide what to 
 |-------|--------|
 | `Session file not found` | Run `tg-reader-check` — use the `suggestion` from output |
 | `Missing credentials` | Guide user through Setup (Step 1-2 below) |
-| `tg-reader: command not found` | Use `python3 -m tg_reader_unified` instead |
+| `tg-reader: command not found` | Run `bash setup-tg-reader.sh` from the skill directory, or manually: `pip install .` Fallback: `python3 -m tg_reader_unified` |
 | `AUTH_KEY_UNREGISTERED` | Session expired — delete and re-auth (see below) |
 
 ### Session Expired
@@ -308,25 +428,42 @@ EOF
 chmod 600 ~/.tg-reader.json
 ```
 
-**Alternative** (interactive only): add `export TG_API_ID=...` and `export TG_API_HASH=...` to `~/.bashrc` or `~/.zshrc`.
+**Alternative** (interactive shell only):
+```bash
+export TG_API_ID=YOUR_ID
+export TG_API_HASH="YOUR_HASH"
+```
+Set these in your current shell session. Avoid writing `TG_API_HASH` to shell profiles (`~/.bashrc`) — use `~/.tg-reader.json` instead for persistent storage.
 
-> **Note:** Agents and servers typically don't load shell profiles. If credentials aren't found after setting env vars, use `~/.tg-reader.json` instead.
+> **Note:** Agents and servers don't load shell profiles. Use `~/.tg-reader.json` (the recommended method above) for non-interactive environments.
 
-### Step 3 — Install
+### Step 3 — Install & Configure
 
 ```bash
 npx clawhub@latest install sergei-mikhailov-tg-channel-reader
 cd ~/.openclaw/workspace/skills/sergei-mikhailov-tg-channel-reader
-pip install pyrogram tgcrypto telethon && pip install .
+bash setup-tg-reader.sh
 ```
 
-On Linux with managed Python (Ubuntu/Debian), use a venv:
+The setup script: installs Python packages (`pip install .`), checks credentials and session, runs `tg-reader-check`, and prints the exec approval commands for you to run manually.
+
+On Linux with managed Python (Ubuntu/Debian), use a venv **before** running the setup script:
 
 ```bash
 python3 -m venv ~/.venv/tg-reader
-~/.venv/tg-reader/bin/pip install pyrogram tgcrypto telethon && ~/.venv/tg-reader/bin/pip install .
 echo 'export PATH="$HOME/.venv/tg-reader/bin:$PATH"' >> ~/.bashrc && source ~/.bashrc
 ```
+
+<details>
+<summary>Manual install (without setup script)</summary>
+
+```bash
+cd ~/.openclaw/workspace/skills/sergei-mikhailov-tg-channel-reader
+pip install pyrogram tgcrypto telethon && pip install .
+openclaw approvals allowlist add --gateway "$(which tg-reader)"
+openclaw approvals allowlist add --gateway "$(which tg-reader-check)"
+```
+</details>
 
 ### Step 4 — Authenticate
 
@@ -336,11 +473,13 @@ tg-reader auth
 
 Pyrogram will ask to confirm the phone number — answer `y`. The code arrives in the Telegram app (not SMS).
 
-### Step 5 — Secure the Session
+### Step 5 — Verify
 
 ```bash
-chmod 600 ~/.tg-reader-session.session
+tg-reader-check
 ```
+
+Should return `"status": "ok"`. If not — fix the reported issues and re-run `bash setup-tg-reader.sh`.
 
 ---
 
@@ -380,7 +519,8 @@ The cron task runs in a **Docker container** — fully autonomous, no agent inte
           "setupCommand": "clawhub install sergei-mikhailov-tg-channel-reader && cd ~/.openclaw/workspace/skills/sergei-mikhailov-tg-channel-reader && pip install pyrogram tgcrypto telethon && pip install .",
           "env": {
             "TG_API_ID": "YOUR_ID",
-            "TG_API_HASH": "YOUR_HASH"
+            "TG_API_HASH": "YOUR_HASH",
+            "TG_READ_UNREAD": "true"
           }
         }
       }

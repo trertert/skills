@@ -2,6 +2,85 @@
 
 ---
 
+## [0.9.2] - 2026-03-05
+
+**Env var support for read_unread.** `TG_READ_UNREAD` and `TG_STATE_FILE` env vars now work alongside the config file — lets you enable read_unread mode via `~/.openclaw/openclaw.json` Docker `env` without needing `~/.tg-reader.json`.
+
+### Added
+- `TG_READ_UNREAD` env var (`"true"`/`"1"`) — enables read_unread mode; overrides config file
+- `TG_STATE_FILE` env var — custom state file path; overrides config file
+- `tg-reader-check` reports whether read_unread comes from env or config file
+
+---
+
+## [0.9.1] - 2026-03-05
+
+**Metadata fix.** Set correct ClawHub display name to "Telegram Channel Reader".
+
+---
+
+## [0.9.0] - 2026-03-05
+
+**Only see new posts.** Enable `read_unread` mode and the skill remembers what you've already seen — subsequent runs return only unread posts, no `--since` needed. Great for daily digests and monitoring workflows. Add `"read_unread": true` to `~/.tg-reader.json` and you're set.
+
+### Added
+- `read_unread` mode: per-channel `last_read_id` stored in `~/.tg-reader-state.json`
+- `"read_unread": true` config option in `~/.tg-reader.json` to enable the mode
+- `"state_file"` config option and `--state-file` CLI flag for custom state file location
+- `--all` CLI flag to bypass read_unread mode and fetch everything without updating state
+- `read_unread` metadata in JSON output when the mode is active
+- `tg_state.py` — shared state management module (no heavy dependencies)
+- `tg-reader-check` now reports read_unread configuration and state file status
+
+### Changed
+- When `read_unread` is active and state exists, `--since` is automatically ignored (all unread posts returned)
+- On first run (no state), `--since` still applies (default 24h)
+- `_fetch_channel` (Pyrogram) accepts optional `min_id` — breaks iteration at already-read messages
+- `fetch_messages` / `iter_messages` (Telethon) uses native `min_id` for server-side filtering
+
+---
+
+## [0.8.12] - 2026-03-05
+
+**Security scan fixes (round 2).** Fixed remaining broad session discovery in reader.py and reader_telethon.py — now all three modules use the same restricted `_SESSION_NAMES` list. Restructured README credential examples to recommend `~/.tg-reader.json` first instead of `~/.bashrc`.
+
+### Changed
+- `reader.py`: replaced broad `*.session` glob with known tg-reader session names only
+- `reader_telethon.py`: same fix — restricted session discovery to known names
+- `README.md`: credential setup now recommends `~/.tg-reader.json` (Option A); env vars demoted to Option D with warning against writing to shell profiles
+
+---
+
+## [0.8.11] - 2026-03-05
+
+**Security scan fixes.** Addressed OpenClaw security scanner findings to move from "Suspicious" to "Benign".
+
+### Changed
+- `setup-tg-reader.sh`: no longer auto-adds commands to exec allowlist — now prints the approval commands for the user to run manually
+- `tg_check.py`: session file discovery now searches only for known tg-reader session names instead of all `*.session` files (avoids exposing unrelated session paths)
+- `SKILL.md`: replaced insecure `~/.bashrc` credential example with recommendation to use `~/.tg-reader.json`; updated setup script descriptions to reflect manual approval flow
+
+---
+
+## [0.8.10] - 2026-03-04
+
+**Version bump.** Internal version alignment — no functional changes.
+
+---
+
+## [0.8.9] - 2026-03-04
+
+**Setup script for first-time installation.** New `setup-tg-reader.sh` checks all prerequisites (Python version, CLI commands in PATH, MTProto libraries, credentials, session file), runs `tg-reader-check`, and **automatically adds commands to OpenClaw exec approvals allowlist** via `openclaw approvals allowlist add --gateway`. No more manual approval needed when using the setup script.
+
+### Added
+- `setup-tg-reader.sh` — pre-flight setup script with colored output, auto-install from `setup.py`, and automatic exec approvals configuration
+- SKILL.md: added CLI approval commands (`openclaw approvals allowlist add --gateway`) and setup script reference
+
+### Changed
+- SKILL.md: restructured Exec Approvals section — quick setup first, manual CLI second, UI/messenger third
+
+---
+
 ## [0.8.8] - 2026-03-01
 
 **Guard against hallucinated CLI flags.** LLM agents sometimes invent flags like `--hours` or `--days` instead of using the correct `--since` flag. Now the CLI catches these typos and returns a helpful JSON error with the correct flag name — so the agent can self-correct instead of failing silently. All argparse errors are now JSON-formatted for agent readability.

@@ -39,7 +39,8 @@ clawhub list                         # reads .clawhub/lock.json
 
 **Type:** OpenClaw skill (Python package published to ClawHub registry)
 **Registry slug:** `sergei-mikhailov-tg-channel-reader`
-**Current version:** 0.8.8
+**ClawHub display name:** `Telegram Channel Reader` (pass `--name "Telegram Channel Reader"` when publishing)
+**Current version:** 0.9.2
 **License:** MIT
 
 ### What it does
@@ -56,6 +57,7 @@ Reads posts from Telegram channels via MTProto (official protocol). Supports Pyr
 | `reader_telethon.py` | Telethon implementation |
 | `tg_reader_unified.py` | Unified entry point — auto-selects backend |
 | `tg_check.py` | Offline diagnostic script (`tg-reader-check`) |
+| `tg_state.py` | Read-tracking state management (load/save per-channel last_read_id) |
 | `CHANGELOG.md` | Version history |
 | `DISCLAIMER.md` | Legal disclaimer |
 | `README_TELETHON.md` | Telethon-specific docs |
@@ -87,6 +89,8 @@ python>=3.9
 | `TG_API_HASH` | Yes | Secret — treat like a password, never commit |
 | `TG_SESSION` | No | Path to session file (default: `~/.tg-reader-session`) |
 | `TG_USE_TELETHON` | No | Set to `"true"` to use Telethon instead of Pyrogram |
+| `TG_READ_UNREAD` | No | Set to `"true"` to enable read_unread mode (env overrides config) |
+| `TG_STATE_FILE` | No | Path to state file (default: `~/.tg-reader-state.json`) |
 
 ### .gitignore (critical — never commit these)
 
