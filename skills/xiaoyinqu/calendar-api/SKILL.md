@@ -2,7 +2,7 @@
 name: calendar-api
 tagline: "Integrate with Google & Outlook calendars"
 description: "Read and write to Google Calendar and Outlook. Schedule meetings, check availability, and manage events. No API keys needed. $2 FREE credits to start. Pay-as-you-go via SkillBoss."
-version: "1.0.0"
+version: "1.0.1"
 author: "SkillBoss"
 homepage: "https://skillboss.co"
 support: "support@skillboss.co"
