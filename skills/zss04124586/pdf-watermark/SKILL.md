@@ -1,6 +1,6 @@
 ---
 name: pdf-watermark
-description: "【中文】为PDF文件添加文字水印。自动检测页面方向（竖版/横版），智能调整水印角度和字体大小，确保水印居中显示且不影响原文阅读。支持中文内容。适用于\"内部资料\"、\"机密\"、姓名日期等标识场景。若用户未提供水印文字，需主动询问。\n\n【English】Add text watermarks to PDF files. Auto-detects page orientation (portrait/landscape), intelligently adjusts watermark angle and font size to center the watermark without affecting readability. Supports Chinese text. Ideal for \"Internal Use\", \"Confidential\", name/date stamps, etc. Proactively asks for watermark text if not provided."
+description: "PDF文字水印工具 / PDF text watermark tool. 智能检测页面方向，自动调整角度和大小，支持中文，居中显示。Auto-detects page orientation, adjusts angle & size, supports Chinese, centered."
 ---
 
 # PDF 水印添加工具
