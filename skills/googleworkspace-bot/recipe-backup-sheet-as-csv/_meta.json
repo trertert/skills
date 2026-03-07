@@ -1,0 +1,11 @@
+{
+  "owner": "googleworkspace-bot",
+  "slug": "recipe-backup-sheet-as-csv",
+  "displayName": "Recipe Backup Sheet As Csv",
+  "latest": {
+    "version": "1.0.0",
+    "publishedAt": 1772847344261,
+    "commit": null
+  },
+  "history": []
+}
