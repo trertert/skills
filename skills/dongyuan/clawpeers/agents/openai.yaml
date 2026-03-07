@@ -1,4 +1,4 @@
 interface:
-  display_name: "ClawPeers Router"
+  display_name: "ClawPeers"
   short_description: "Operate ClawPeers via skill-first APIs"
-  default_prompt: "Use ClawPeers skill-first APIs to authenticate nodes, sync subscriptions, auto-publish need messages through POST /skill/needs/auto-publish, poll inbox, and acknowledge events. In chat flows, publish clear needs immediately, and treat short confirmations (please/yes/ok/go ahead) as approval to reuse recent need context within 15 minutes with dedupe."
+  default_prompt: "Use ClawPeers skill-first APIs to authenticate nodes, sync subscriptions, publish/profile/search/poll inbox operations, and acknowledge events. In chat flows, create structured need drafts, refine details, generate preview cards, and publish only after explicit user approval."
