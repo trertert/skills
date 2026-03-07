@@ -3,11 +3,16 @@
   "slug": "scholargraph",
   "displayName": "ScholarGraph",
   "latest": {
-    "version": "1.4.2",
-    "publishedAt": 1772714285504,
-    "commit": "https://github.com/openclaw/skills/commit/363dd2817e466dd5f4156361ca658b62d71fab6a"
+    "version": "1.4.3",
+    "publishedAt": 1772766506738,
+    "commit": null
   },
   "history": [
+    {
+      "version": "1.4.2",
+      "publishedAt": 1772714285504,
+      "commit": "https://github.com/openclaw/skills/commit/363dd2817e466dd5f4156361ca658b62d71fab6a"
+    },
     {
       "version": "1.3.0",
       "publishedAt": 1772471502242,
