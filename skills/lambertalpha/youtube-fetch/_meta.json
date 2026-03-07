@@ -1,11 +1,17 @@
 {
   "owner": "lambertalpha",
   "slug": "youtube-fetch",
-  "displayName": "Youtube Fetch",
+  "displayName": "Video Fetch — YouTube & Bilibili",
   "latest": {
-    "version": "1.0.0",
-    "publishedAt": 1772810848709,
-    "commit": "https://github.com/openclaw/skills/commit/6a7952f4b2f23b81d72054a799efb7ecd4ee8fde"
+    "version": "3.0.3",
+    "publishedAt": 1772849019191,
+    "commit": null
   },
-  "history": []
+  "history": [
+    {
+      "version": "1.0.0",
+      "publishedAt": 1772810848709,
+      "commit": "https://github.com/openclaw/skills/commit/6a7952f4b2f23b81d72054a799efb7ecd4ee8fde"
+    }
+  ]
 }
