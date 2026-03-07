@@ -12,7 +12,6 @@ const RENDER_DATA_SCHEMA_FIELDS = {
   RenderData: ['id', 'width', 'height', 'layers'],
   TextRenderData: ['id', 'type', 'x', 'y', 'width', 'height', 'content', 'style'],
   ImgRenderData: ['id', 'type', 'x', 'y'],
-  ContainerRenderData: ['id', 'type', 'layers'],
   ShapeRenderData: ['id', 'type', 'shapes'],
 };
 

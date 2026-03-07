@@ -1,7 +1,7 @@
 ---
 name: materials-cli
 description: Render JSON schemas to images and generate schemas from prompts using declare-render and AI.
-version: 1.0.7
+version: 1.0.8
 metadata:
   clawdbot:
     requires:
@@ -71,4 +71,4 @@ Examples:
 
 ## Schema format
 
-The JSON schema follows the declare-render format: root has `id`, `width`, `height`, and `layers`. Layer types include text, image, container, shape, etc. Use `materials validate <file>` to check a schema before rendering.
+The JSON schema follows the declare-render format: root has `id`, `width`, `height`, and `layers`. Layer types include text, image, and shape. Use `materials validate <file>` to check a schema before rendering.
