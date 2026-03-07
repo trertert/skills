@@ -3,11 +3,16 @@
   "slug": "sports-ticker",
   "displayName": "Sports Ticker",
   "latest": {
-    "version": "3.0.7",
-    "publishedAt": 1772565153570,
-    "commit": "https://github.com/openclaw/skills/commit/b99753656df4cedc5fafd8394d7a3a039a849e2f"
+    "version": "3.1.1",
+    "publishedAt": 1772775429275,
+    "commit": null
   },
   "history": [
+    {
+      "version": "3.0.7",
+      "publishedAt": 1772565153570,
+      "commit": "https://github.com/openclaw/skills/commit/b99753656df4cedc5fafd8394d7a3a039a849e2f"
+    },
     {
       "version": "3.0.6",
       "publishedAt": 1771183766374,
