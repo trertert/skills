@@ -1,0 +1,11 @@
+{
+  "owner": "noah-smith-max",
+  "slug": "proxy-detect",
+  "displayName": "detect opened proxy",
+  "latest": {
+    "version": "1.0.0",
+    "publishedAt": 1772767579777,
+    "commit": null
+  },
+  "history": []
+}
