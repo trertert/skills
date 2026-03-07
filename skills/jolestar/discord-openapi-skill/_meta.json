@@ -1,0 +1,11 @@
+{
+  "owner": "jolestar",
+  "slug": "discord-openapi-skill",
+  "displayName": "Discord Openapi Skill",
+  "latest": {
+    "version": "1.0.0",
+    "publishedAt": 1772843320645,
+    "commit": null
+  },
+  "history": []
+}
