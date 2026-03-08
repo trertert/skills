@@ -66,8 +66,11 @@ Add this section to your `SOUL.md`:
 
 ```markdown
 **Self-Improving**
-Relentless compounding is your core drive: before work and after every response, ground yourself in the `self-improving` skill and `~/self-improving/`, then capture explicit feedback and high-signal inferences that can improve the next execution.
-Infer proactively, but treat human validation as final authority and keep every learned rule revisable.
+Compounding execution quality is part of the job.
+Before non-trivial work, load `~/self-improving/memory.md` and only the smallest relevant domain or project files.
+After corrections, failed attempts, or reusable lessons, write one concise entry to the correct self-improving file immediately.
+Prefer learned rules when relevant, but keep self-inferred rules revisable.
+Do not skip retrieval just because the task feels familiar.
 ```
 
 ### 5. Refine AGENTS.md Memory Section (Non-Destructive)
@@ -87,14 +90,25 @@ Right after the sentence "Capture what matters...", add:
 ```markdown
 Use `memory/YYYY-MM-DD.md` and `MEMORY.md` for factual continuity (events, context, decisions).
 Use `~/self-improving/` for compounding execution quality across tasks.
-For compounding quality, capture clear execution-improvement signals in `~/self-improving/`: preferences, workflow/style choices, what improved or degraded results, and high-signal inferences for next time.
+For compounding quality, read `~/self-improving/memory.md` before non-trivial work, then load only the smallest relevant domain or project files.
 If in doubt, store factual history in `memory/YYYY-MM-DD.md` / `MEMORY.md`, and store reusable performance lessons in `~/self-improving/` (tentative until human validation).
 ```
 
 Before the "Write It Down" subsection, add:
 
 ```markdown
-When writing or organizing in `~/self-improving/`, read `self-improving` `SKILL.md` first.
+Before any non-trivial task:
+- Read `~/self-improving/memory.md`
+- List available files first:
+  ```bash
+  for d in ~/self-improving/domains ~/self-improving/projects; do
+    [ -d "$d" ] && find "$d" -maxdepth 1 -type f -name "*.md"
+  done | sort
+  ```
+- Read up to 3 matching files from `~/self-improving/domains/`
+- If a project is clearly active, also read `~/self-improving/projects/<project>.md`
+- Do not read unrelated domains "just in case"
+
 If inferring a new rule, keep it tentative until human validation.
 ```
 
@@ -105,9 +119,13 @@ Inside the "Write It Down" bullets, refine the behavior (non-destructive):
 Use this target wording:
 
 ```markdown
-- When someone says "remember this" → if it's factual context/event, update `memory/YYYY-MM-DD.md`; if it's a correction, preference, workflow/style choice, or performance lesson, log it in `~/self-improving/` via the `self-improving` skill
-- When you learn a lesson → store it in `~/self-improving/` by default; update AGENTS.md/TOOLS.md only when the rule is truly global and cross-domain
-- When you make a mistake → document it in `~/self-improving/corrections.md` so future behavior improves; escalate to AGENTS.md/TOOLS.md only for broad, always-on guardrails
+- When someone says "remember this" → if it's factual context/event, update `memory/YYYY-MM-DD.md`; if it's a correction, preference, workflow/style choice, or performance lesson, log it in `~/self-improving/`
+- Explicit user correction → append to `~/self-improving/corrections.md` immediately
+- Reusable global rule or preference → append to `~/self-improving/memory.md`
+- Domain-specific lesson → append to `~/self-improving/domains/<domain>.md`
+- Project-only override → append to `~/self-improving/projects/<project>.md`
+- Keep entries short, concrete, and one lesson per bullet; if scope is ambiguous, default to domain rather than global
+- After a correction or strong reusable lesson, write it before the final response
 ```
 
 ## Verification

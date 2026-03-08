@@ -1,10 +1,10 @@
 ---
-name: Self-Improving Agent (With Self-Reflection)
+name: Self-Improving Agent (Proactive Self-Reflection)
 slug: self-improving
-version: 1.2.9
+version: 1.2.10
 homepage: https://clawic.com/skills/self-improving
 description: Self-reflection + Self-criticism + Self-learning + Self-organizing memory. Agent evaluates its own work, catches mistakes, and improves permanently. Use before starting work and after responding to the user.
-changelog: "Refined AGENTS.md memory-routing wording for clarity while preserving behavior."
+changelog: "Sharper setup now lists relevant memory before non-trivial work, with a title that highlights proactive self-reflection."
 metadata: {"clawdbot":{"emoji":"🧠","requires":{"bins":[]},"os":["linux","darwin","win32"],"configPaths":["~/self-improving/"]}}
 ---
 
