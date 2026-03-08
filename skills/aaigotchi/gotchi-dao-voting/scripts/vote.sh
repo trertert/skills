@@ -1,224 +1,263 @@
-#!/bin/bash
+#!/usr/bin/env bash
 # Vote on Aavegotchi Snapshot proposals via Bankr signature
-# Usage: vote.sh <proposal-id> <choice>
 
-set -e
+set -euo pipefail
 
-if [ $# -lt 2 ]; then
-  echo "Usage: $0 <proposal-id> <choice>"
-  echo ""
-  echo "Examples:"
-  echo "  Single-choice: $0 0xabc123... 2"
-  echo "  Weighted:      $0 0xabc123... '{\"2\": 2238}'"
-  exit 1
-fi
+usage() {
+  cat <<USAGE
+Usage: $0 [--dry-run] <proposal-id> <choice>
 
-PROPOSAL_ID="$1"
-CHOICE="$2"
+Examples:
+  Single-choice: $0 0xabc123... 2
+  Weighted:      $0 0xabc123... '{"2": 2238}'
+  Dry run:       $0 --dry-run 0xabc123... 2
+USAGE
+}
 
-# Load config
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-CONFIG_FILE="$SCRIPT_DIR/../config.json"
+# shellcheck source=lib.sh
+source "$SCRIPT_DIR/lib.sh"
 
-if [ ! -f "$CONFIG_FILE" ]; then
-  echo "❌ Config file not found: $CONFIG_FILE"
+DRY_RUN=0
+POSITIONAL=()
+while [ "$#" -gt 0 ]; do
+  case "$1" in
+    --dry-run)
+      DRY_RUN=1
+      shift
+      ;;
+    -h|--help)
+      usage
+      exit 0
+      ;;
+    *)
+      POSITIONAL+=("$1")
+      shift
+      ;;
+  esac
+done
+
+if [ "${#POSITIONAL[@]}" -lt 2 ]; then
+  usage
   exit 1
 fi
 
-WALLET=$(jq -r '.wallet' "$CONFIG_FILE")
-SPACE=$(jq -r '.space' "$CONFIG_FILE")
-SNAPSHOT_API=$(jq -r '.snapshotApiUrl' "$CONFIG_FILE")
-SEQUENCER=$(jq -r '.snapshotSequencer' "$CONFIG_FILE")
+PROPOSAL_ID="$(normalize_proposal_id "${POSITIONAL[0]}")"
+CHOICE_RAW="${POSITIONAL[1]}"
 
-# Get Bankr API key
-BANKR_CONFIG="$HOME/.openclaw/skills/bankr/config.json"
-if [ ! -f "$BANKR_CONFIG" ]; then
-  echo "❌ Bankr config not found: $BANKR_CONFIG"
-  exit 1
-fi
+require_tools
+load_config
+API_KEY="$(resolve_bankr_api_key)"
 
-API_KEY=$(jq -r '.apiKey' "$BANKR_CONFIG")
+TMP_TYPED="$(mktemp /tmp/vote-typed-XXXXXX.json)"
+TMP_PAYLOAD="$(mktemp /tmp/vote-payload-XXXXXX.json)"
+cleanup() {
+  rm -f "$TMP_TYPED" "$TMP_PAYLOAD"
+}
+trap cleanup EXIT
 
 echo "🗳️  AAVEGOTCHI DAO VOTING"
 echo "========================"
-echo ""
-echo "👤 Wallet: $WALLET"
-echo "📋 Proposal: $PROPOSAL_ID"
-echo "✅ Choice: $CHOICE"
-echo ""
+echo
+printf "👤 Wallet: %s\n" "$WALLET"
+printf "📋 Proposal: %s\n" "$PROPOSAL_ID"
+printf "✅ Choice: %s\n" "$CHOICE_RAW"
+echo
 
-# Get proposal details
 echo "🔍 Fetching proposal details..."
-PROPOSAL_DATA=$(curl -s -X POST "$SNAPSHOT_API" \
-  -H "Content-Type: application/json" \
-  -d "{
-    \"query\": \"query { proposal(id: \\\"$PROPOSAL_ID\\\") { id title type choices state } }\"
-  }")
+P_QUERY='query($id:String!){ proposal(id: $id) { id title type choices state } }'
+P_VARS="$(jq -n --arg id "$PROPOSAL_ID" '{id:$id}')"
+PROPOSAL_DATA="$(snapshot_query "$P_QUERY" "$P_VARS")"
 
-TITLE=$(echo "$PROPOSAL_DATA" | jq -r '.data.proposal.title')
-TYPE=$(echo "$PROPOSAL_DATA" | jq -r '.data.proposal.type')
-STATE=$(echo "$PROPOSAL_DATA" | jq -r '.data.proposal.state')
-CHOICES=$(echo "$PROPOSAL_DATA" | jq -r '.data.proposal.choices[]')
+if snapshot_has_errors "$PROPOSAL_DATA"; then
+  echo "❌ Snapshot proposal query error"
+  echo "$PROPOSAL_DATA" | jq '.errors'
+  exit 1
+fi
+
+if [ "$(echo "$PROPOSAL_DATA" | jq -r '.data.proposal.id // empty')" = "" ]; then
+  echo "❌ Proposal not found: $PROPOSAL_ID"
+  exit 1
+fi
+
+TITLE="$(echo "$PROPOSAL_DATA" | jq -r '.data.proposal.title')"
+TYPE="$(echo "$PROPOSAL_DATA" | jq -r '.data.proposal.type')"
+STATE="$(echo "$PROPOSAL_DATA" | jq -r '.data.proposal.state')"
+CHOICE_COUNT="$(echo "$PROPOSAL_DATA" | jq -r '.data.proposal.choices | length')"
 
 echo "📝 Title: $TITLE"
 echo "🎯 Type: $TYPE"
 echo "⚡ State: $STATE"
-echo ""
-
-if [ "$STATE" != "active" ]; then
-  echo "⚠️  Warning: Proposal is not active (state: $STATE)"
-  echo "   Voting may not be accepted"
-  echo ""
-fi
+echo
 
 echo "📊 Available choices:"
-echo "$CHOICES" | nl
-echo ""
+echo "$PROPOSAL_DATA" | jq -r '.data.proposal.choices[]' | nl
 
-# Check voting power
+if [ "$STATE" != "active" ]; then
+  echo
+  echo "⚠️  Proposal is not active (state: $STATE); sequencer may reject this vote."
+fi
+
+echo
 echo "💪 Checking voting power..."
-VP_DATA=$(curl -s -X POST "$SNAPSHOT_API" \
-  -H "Content-Type: application/json" \
-  -d "{
-    \"query\": \"query { vp(voter: \\\"$WALLET\\\", space: \\\"$SPACE\\\", proposal: \\\"$PROPOSAL_ID\\\") { vp vp_by_strategy } }\"
-  }")
+VP_QUERY='query($voter:String!, $space:String!, $proposal:String!){ vp(voter: $voter, space: $space, proposal: $proposal) { vp vp_by_strategy } }'
+VP_VARS="$(jq -n --arg voter "$WALLET" --arg space "$SPACE" --arg proposal "$PROPOSAL_ID" '{voter:$voter,space:$space,proposal:$proposal}')"
+VP_DATA="$(snapshot_query "$VP_QUERY" "$VP_VARS")"
 
-VP=$(echo "$VP_DATA" | jq -r '.data.vp.vp')
-VP_BY_STRATEGY=$(echo "$VP_DATA" | jq '.data.vp.vp_by_strategy')
-
-echo "   Total VP: $VP"
-echo "   Breakdown: $VP_BY_STRATEGY"
-echo ""
-
-if [ "$VP" = "0" ] || [ "$VP" = "null" ]; then
-  echo "❌ You have 0 voting power on this proposal"
-  echo "   Cannot vote"
+if snapshot_has_errors "$VP_DATA"; then
+  echo "❌ Snapshot VP query error"
+  echo "$VP_DATA" | jq '.errors'
   exit 1
 fi
 
-# Prepare choice based on voting type
-CHOICE_VALUE="$CHOICE"
+VP="$(echo "$VP_DATA" | jq -r '.data.vp.vp // 0')"
+VP_BY_STRATEGY="$(echo "$VP_DATA" | jq -c '.data.vp.vp_by_strategy // []')"
+echo "   Total VP: $VP"
+echo "   Breakdown: $VP_BY_STRATEGY"
 
-# If it's weighted voting and choice doesn't look like JSON, convert it
-if [ "$TYPE" = "weighted" ]; then
-  if [[ ! "$CHOICE" =~ ^\{.*\}$ ]]; then
-    # Simple number provided, convert to weighted format
-    CHOICE_VALUE="{\"$CHOICE\": ${VP%.*}}"
-    echo "💡 Converted to weighted format: $CHOICE_VALUE"
-    echo ""
-  fi
+if [ "$VP" = "0" ] || [ "$VP" = "null" ]; then
+  echo "❌ You have 0 voting power on this proposal"
+  exit 1
 fi
 
-# Build typed data
-TIMESTAMP=$(date +%s)
+CHOICE_TYPE="uint32"
+CHOICE_VALUE="$CHOICE_RAW"
 
-# Determine choice type based on voting type
 if [ "$TYPE" = "weighted" ]; then
   CHOICE_TYPE="string"
-else
-  CHOICE_TYPE="uint32"
-  # For single-choice, ensure it's a number
-  if [[ "$CHOICE" =~ ^[0-9]+$ ]]; then
-    CHOICE_VALUE=$CHOICE
+
+  if [[ "$CHOICE_RAW" =~ ^\{.*\}$ ]]; then
+    echo "$CHOICE_RAW" | jq -e --argjson max "$CHOICE_COUNT" '
+      type == "object" and
+      (keys | length > 0) and
+      all(keys[]; test("^[0-9]+$") and ((tonumber >= 1) and (tonumber <= $max))) and
+      all(.[]; (type == "number") and (. >= 0))
+    ' >/dev/null 2>&1 || err "Invalid weighted JSON choice (keys must be 1..$CHOICE_COUNT, values numeric >= 0)"
+    CHOICE_VALUE="$(echo "$CHOICE_RAW" | jq -c '.')"
+  elif [[ "$CHOICE_RAW" =~ ^[0-9]+$ ]]; then
+    [ "$CHOICE_RAW" -ge 1 ] && [ "$CHOICE_RAW" -le "$CHOICE_COUNT" ] || err "Choice out of range (1..$CHOICE_COUNT)"
+    VP_FLOOR="$(printf '%.0f' "$VP")"
+    CHOICE_VALUE="$(jq -n --arg key "$CHOICE_RAW" --argjson vp "$VP_FLOOR" '{($key):$vp}' | jq -c '.')"
+    echo "💡 Converted weighted choice: $CHOICE_VALUE"
   else
-    echo "❌ Single-choice voting requires a number (1, 2, 3, etc.)"
-    exit 1
+    err "Weighted voting requires numeric choice or JSON object"
   fi
+else
+  [[ "$CHOICE_RAW" =~ ^[0-9]+$ ]] || err "Single-choice voting requires numeric choice"
+  [ "$CHOICE_RAW" -ge 1 ] && [ "$CHOICE_RAW" -le "$CHOICE_COUNT" ] || err "Choice out of range (1..$CHOICE_COUNT)"
+  CHOICE_VALUE="$CHOICE_RAW"
 fi
 
-# Create typed data file
-cat > /tmp/vote_typed_data.json <<EOF
-{
-  "types": {
-    "Vote": [
-      {"name": "from", "type": "address"},
-      {"name": "space", "type": "string"},
-      {"name": "timestamp", "type": "uint64"},
-      {"name": "proposal", "type": "bytes32"},
-      {"name": "choice", "type": "$CHOICE_TYPE"},
-      {"name": "reason", "type": "string"},
-      {"name": "app", "type": "string"},
-      {"name": "metadata", "type": "string"}
-    ]
-  },
-  "domain": {
-    "name": "snapshot",
-    "version": "0.1.4"
-  },
-  "primaryType": "Vote",
-  "message": {
-    "from": "$WALLET",
-    "space": "$SPACE",
-    "timestamp": $TIMESTAMP,
-    "proposal": "$PROPOSAL_ID",
-    "choice": $(if [ "$CHOICE_TYPE" = "string" ]; then echo "$CHOICE_VALUE" | jq -R .; else echo "$CHOICE_VALUE"; fi),
-    "reason": "",
-    "app": "openclaw",
-    "metadata": "{}"
-  }
-}
-EOF
+TIMESTAMP="$(date +%s)"
+
+if [ "$CHOICE_TYPE" = "string" ]; then
+  jq -n \
+    --arg from "$WALLET" \
+    --arg space "$SPACE" \
+    --arg proposal "$PROPOSAL_ID" \
+    --arg choice "$CHOICE_VALUE" \
+    --arg app "openclaw" \
+    --arg metadata "{}" \
+    --argjson timestamp "$TIMESTAMP" \
+    '{
+      types: {
+        Vote: [
+          {name:"from",type:"address"},
+          {name:"space",type:"string"},
+          {name:"timestamp",type:"uint64"},
+          {name:"proposal",type:"bytes32"},
+          {name:"choice",type:"string"},
+          {name:"reason",type:"string"},
+          {name:"app",type:"string"},
+          {name:"metadata",type:"string"}
+        ]
+      },
+      domain: {name:"snapshot",version:"0.1.4"},
+      primaryType:"Vote",
+      message: {from:$from,space:$space,timestamp:$timestamp,proposal:$proposal,choice:$choice,reason:"",app:$app,metadata:$metadata}
+    }' > "$TMP_TYPED"
+else
+  jq -n \
+    --arg from "$WALLET" \
+    --arg space "$SPACE" \
+    --arg proposal "$PROPOSAL_ID" \
+    --arg app "openclaw" \
+    --arg metadata "{}" \
+    --argjson timestamp "$TIMESTAMP" \
+    --argjson choice "$CHOICE_VALUE" \
+    '{
+      types: {
+        Vote: [
+          {name:"from",type:"address"},
+          {name:"space",type:"string"},
+          {name:"timestamp",type:"uint64"},
+          {name:"proposal",type:"bytes32"},
+          {name:"choice",type:"uint32"},
+          {name:"reason",type:"string"},
+          {name:"app",type:"string"},
+          {name:"metadata",type:"string"}
+        ]
+      },
+      domain: {name:"snapshot",version:"0.1.4"},
+      primaryType:"Vote",
+      message: {from:$from,space:$space,timestamp:$timestamp,proposal:$proposal,choice:$choice,reason:"",app:$app,metadata:$metadata}
+    }' > "$TMP_TYPED"
+fi
+
+echo
+echo "📝 Typed data prepared"
+
+if [ "$DRY_RUN" -eq 1 ]; then
+  echo "--- DRY RUN ---"
+  cat "$TMP_TYPED" | jq '.'
+  exit 0
+fi
 
 echo "📝 Signing vote with Bankr..."
+SIGN_PAYLOAD="$(jq -n --slurpfile typed "$TMP_TYPED" '{signatureType:"eth_signTypedData_v4",typedData:$typed[0]}')"
 
-# Sign with Bankr
-SIGN_RESPONSE=$(curl -s -X POST "https://api.bankr.bot/agent/sign" \
+SIGN_RESPONSE="$(curl -sS -X POST "https://api.bankr.bot/agent/sign" \
   -H "X-API-Key: $API_KEY" \
   -H "Content-Type: application/json" \
-  -d "{
-    \"signatureType\": \"eth_signTypedData_v4\",
-    \"typedData\": $(cat /tmp/vote_typed_data.json | jq -c .)
-  }")
+  -d "$SIGN_PAYLOAD")"
 
-SIGNATURE=$(echo "$SIGN_RESPONSE" | jq -r '.signature')
+SIGNATURE="$(echo "$SIGN_RESPONSE" | jq -r '.signature // empty')"
 
-if [ "$SIGNATURE" = "null" ] || [ -z "$SIGNATURE" ]; then
+if [ -z "$SIGNATURE" ]; then
   echo "❌ Failed to get signature from Bankr"
-  echo "$SIGN_RESPONSE" | jq .
+  echo "$SIGN_RESPONSE" | jq '.'
   exit 1
 fi
 
 echo "✅ Signature obtained"
-echo ""
 
-# Submit to Snapshot
 echo "📤 Submitting vote to Snapshot..."
 
-cat > /tmp/vote_payload.json <<PAYLOAD
-{
-  "address": "$WALLET",
-  "sig": "$SIGNATURE",
-  "data": $(cat /tmp/vote_typed_data.json | jq -c .)
-}
-PAYLOAD
+jq -n \
+  --arg address "$WALLET" \
+  --arg sig "$SIGNATURE" \
+  --slurpfile data "$TMP_TYPED" \
+  '{address:$address,sig:$sig,data:$data[0]}' > "$TMP_PAYLOAD"
 
-VOTE_RESPONSE=$(curl -s -X POST "$SEQUENCER" \
-  -H "Content-Type: application/json" \
-  -d @/tmp/vote_payload.json)
+VOTE_RESPONSE="$(curl -sS -X POST "$SEQUENCER" -H "Content-Type: application/json" -d @"$TMP_PAYLOAD")"
 
 echo "📬 Response:"
-echo "$VOTE_RESPONSE" | jq .
-echo ""
+echo "$VOTE_RESPONSE" | jq '.'
 
-# Check result
-if echo "$VOTE_RESPONSE" | jq -e '.id' > /dev/null 2>&1; then
-  VOTE_ID=$(echo "$VOTE_RESPONSE" | jq -r '.id')
-  IPFS=$(echo "$VOTE_RESPONSE" | jq -r '.ipfs')
-  
+if echo "$VOTE_RESPONSE" | jq -e '.id' >/dev/null 2>&1; then
+  VOTE_ID="$(echo "$VOTE_RESPONSE" | jq -r '.id')"
+  IPFS="$(echo "$VOTE_RESPONSE" | jq -r '.ipfs // empty')"
+  echo
   echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
-  echo "✅ VOTE SUCCESSFUL!"
+  echo "✅ VOTE SUCCESSFUL"
   echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
-  echo ""
   echo "📋 Vote ID: $VOTE_ID"
-  echo "📦 IPFS: $IPFS"
+  if [ -n "$IPFS" ]; then
+    echo "📦 IPFS: $IPFS"
+  fi
   echo "🔗 View: https://snapshot.org/#/$SPACE/proposal/$PROPOSAL_ID"
-  echo ""
-  echo "✅ Your vote has been recorded on Snapshot!"
 else
-  ERROR=$(echo "$VOTE_RESPONSE" | jq -r '.error_description // .error // "Unknown error"')
+  ERROR="$(echo "$VOTE_RESPONSE" | jq -r '.error_description // .error // "Unknown error"')"
   echo "❌ Vote failed: $ERROR"
   exit 1
 fi
-
-# Cleanup
-rm -f /tmp/vote_typed_data.json /tmp/vote_payload.json
