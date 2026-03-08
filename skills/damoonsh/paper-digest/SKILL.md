@@ -4,14 +4,7 @@ description: "Given an arXiv ID or URL, fetch the paper, spawn sub-agents to rea
 user-invocable: true
 author: Damoon
 version: 0.0.1
-metadata:
-  openclaw:
-    emoji: "📄"
-    always: true
-    requires:
-      skills: ["arxiv-paper-processor"]
 ---
-
 # Paper Digest
 
 ## Input
@@ -20,52 +13,61 @@ metadata:
 
 ## Step 1 — Fetch the main paper
 
-Try HTML first: web.fetch https://arxiv.org/html/ with 70000 chars<arxiv_id>
+Try HTML first: web.fetch https://arxiv.org/html/<arxiv_id>
 - If HTTP 200 → use this as `paper_text`.
-- Otherwise → invoke `arxiv-paper-processor` with the arXiv ID and use its output as `paper_text`.
+- If Falis: add v1 at the end, and try again: web.fetch https://arxiv.org/html/<arxiv_id>v1
+- else if all fails skip and ABORT!
+
+If the `paper_text` is retrieved then write the summary to `~/.openclaw/workspace/papers/<arxiv-id>.md`.
 
 ## Step 2 — Extract citations
 
-From `paper_text`, identify at most 5 citations the paper most directly builds on — things it explicitly extends, uses as a baseline, or borrows architecture from. More general, papers that are refered to repeatedly and might help us understand the text better. For each, extract: `arXiv ID` or the title.
+Note: DO NOT DO THIS STEP INSIDE sub-agents
 
-Resolve each citation's arXiv link:
-- If an arXiv ID is in the reference → `https://arxiv.org/abs/<id>`
-- Otherwise search `https://arxiv.org/search/?query=<title>&searchtype=all`
-  and take the first match.
+Within the `main agent` and from `paper_text`, identify **at most 5 citations** the paper most directly builds on. Prioritize:
+- Papers that are **explicitly extended** or improved upon
+- Papers used as the **primary baseline** for comparison
+- Papers that **provide the core architecture** this work adopts
+- Papers **referred to repeatedly** (not just mentioned once) or that provide essential context
+
+For each citation, extract either the `arXiv ID` or the **title**. Then resolve to an arXiv URL:
+- If an arXiv ID is in the reference → `https://arxiv.org/html/<id>`
+- Otherwise search `https://arxiv.org/search/?query=<title>&searchtype=all` and take the first match.
 
 ## Step 3 — Spawn sub-agents for citations
 
-For each resolved citation, spawn a sub-agent with this exact instruction:
+***Note***: Ensure that the sub-agent related task is precise and concise so the sub-agent does not have to re-read the previously read SKILLs and files.
 
-"Fetch https://arxiv.org/html/<citation_id>. If unavailable, invoke arxiv-paper-processor with ID <citation_id>. Return a summary explaining the contributions, ablations, methods, data used, and every bit of relevant information."
+For each resolved citation:
+- Check if the file for citation exists: `~/.openclaw/workspace/papers/<arxiv-id>.md`, if it does then skip and consider the sub-agent concluded.
+- If the previous step fails then spawn a sub-agent with this EXACT instruction in VERBATIM: 
+  - Fetch https://arxiv.org/html/<citation_id> (or add v1 at the end, and try again: web.fetch https://arxiv.org/html/<arxiv_id>v1). If unavailable, SKIP. If retrieved then Write the summary to `~/.openclaw/workspace/papers/<arxiv-id>.md`.
 
-Collect all sub-agent responses before proceeding. If a citation cannot be
-fetched, note it as "unavailable" and continue.
 
 ## Step 4 — Write the executive summary
 
-Write a single markdown document, in flowing prose — not bullets. Use this loose structure:
+Check the citation summaries within `~/.openclaw/workspace/papers/` then utilize the main paper we are summarising with citation summaries and write a single **markdown document in flowing prose** (no bullet lists) to `~/.openclaw/workspace/digest/report_<arxiv-id>`. Use this structure:
 
-    # <Title>
-    *<Authors> · <Year> · [arXiv](<link>)*
+```markdown
+# <Title>
 
-    ---
+<What problem this solves and why it matters. Context and related references summary>
 
-    <What problem this solves and why it matters. Context and related references summary>
+<What prior work missed and how this paper addresses that gap. Cite inline as [Author et al., YEAR](<arxiv_link>).
 
-    <What prior work missed and how this paper addresses that gap.Cite inline as [Author et al., YEAR](<arxiv_link>). >
+<Core method in plain terms>
 
-    <Core method in plain terms>
+<Headline result. How it differs from previous work.
 
-    <Headline result. How it differs from previous.>
+<One limitation and one future direction>
 
-    <One limitation and one future direction >
-    <Ablations, benchmarks, table from this or cited references>
+<Detailed Ablations, benchmarks if present in this paper or cited references>
+```
 
 ## Rules
 
 - Every citation must be a markdown link: `[Author et al., YEAR](<arxiv_or_url>)`
-- No bullet lists in the output — prose only.
-- If a section is absent from the paper (e.g. no ablations), skip it silently.
+- No bullet lists in the output — **prose only**.
+- If a section is absent from the paper (e.g., no ablations), skip it silently.
 - Do not fabricate results, metrics, or author claims.
-- If a citation URL cannot be resolved after one retry, write the citation as plain text without a link: `[Author et al., YEAR]`
+- **Citation resolution retry**: If a citation URL cannot be resolved after one retry, write the citation as plain text without a link: `[Author et al., YEAR]`.
