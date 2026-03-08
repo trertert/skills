@@ -3,11 +3,16 @@
   "slug": "aegis",
   "displayName": "AEGIS",
   "latest": {
-    "version": "1.4.1",
-    "publishedAt": 1772811347433,
-    "commit": "https://github.com/openclaw/skills/commit/ceb1d71cd379d663f6b1d07bdbcf7892865f59b2"
+    "version": "3.0.3",
+    "publishedAt": 1772870384984,
+    "commit": null
   },
   "history": [
+    {
+      "version": "1.4.1",
+      "publishedAt": 1772811347433,
+      "commit": "https://github.com/openclaw/skills/commit/ceb1d71cd379d663f6b1d07bdbcf7892865f59b2"
+    },
     {
       "version": "1.1.0",
       "publishedAt": 1772804006516,

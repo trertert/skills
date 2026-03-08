@@ -169,13 +169,22 @@ def fetch_rss(url, max_items=20):
     except Exception as e:
         return []
 
-def fetch_web(url, max_chars=8000):
-    """Fetch web page and extract text."""
+def fetch_web(url, max_chars=8000, ssl_verify=True):
+    """Fetch web page and extract text.
+
+    Security: TLS verification is ALWAYS enforced.
+    If a source requires disabling verification, it is skipped (risk: MITM injection).
+    """
     try:
+        cmd = ["curl", "-sL", "--max-time", "15", "--compressed",
+             "-H", "User-Agent: Mozilla/5.0 (compatible; AEGIS/1.0)"]
+        if not ssl_verify:
+            # Never disable TLS verification.
+            # Return empty so the scanner continues safely.
+            return []
+        cmd.append(url)
         result = subprocess.run(
-            ["curl", "-sL", "--max-time", "15", "--compressed",
-             "-H", "User-Agent: Mozilla/5.0 (compatible; AEGIS/1.0)",
-             url],
+            cmd,
             capture_output=True, text=True, timeout=20
         )
         if result.returncode != 0 or not result.stdout:
@@ -422,11 +431,12 @@ def fetch_source(source, config):
     """Fetch items from a source based on its type."""
     src_type = source.get("type", "web")
     url = source.get("url", source.get("url_template", ""))
+    ssl_verify = source.get("ssl_verify", True)
     
     if src_type == "rss":
         return fetch_rss(url)
     elif src_type == "web":
-        return fetch_web(url)
+        return fetch_web(url, ssl_verify=ssl_verify)
     elif src_type == "liveuamap":
         return fetch_liveuamap(url)
     elif src_type == "world_monitor":
