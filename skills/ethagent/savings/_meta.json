@@ -1,0 +1,11 @@
+{
+  "owner": "ethagent",
+  "slug": "savings",
+  "displayName": "Savings",
+  "latest": {
+    "version": "1.0.0",
+    "publishedAt": 1772942489358,
+    "commit": null
+  },
+  "history": []
+}
