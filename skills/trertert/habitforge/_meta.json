@@ -1,0 +1,17 @@
+{
+  "owner": "trertert",
+  "slug": "habitforge",
+  "displayName": "HabitForge",
+  "latest": {
+    "version": "1.0.0",
+    "publishedAt": 1710000000000,
+    "commit": "https://github.com/openclaw/skills/commit/new-habitforge-skill"
+  },
+  "history": [
+    {
+      "version": "1.0.0",
+      "publishedAt": 1710000000000,
+      "commit": "https://github.com/openclaw/skills/commit/new-habitforge-skill"
+    }
+  ]
+}
