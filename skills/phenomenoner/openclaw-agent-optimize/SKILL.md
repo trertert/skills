@@ -1,7 +1,7 @@
 ---
 name: openclaw-agent-optimize
 slug: openclaw-agent-optimize
-version: 1.2.0
+version: 1.2.1
 license: MIT
 description: |
   Use when: you want a structured audit -> options -> recommended plan to improve an OpenClaw workspace
@@ -23,79 +23,103 @@ metadata:
 
 Use this skill to tune an OpenClaw workspace for **cost-aware routing**, **parallel-first delegation**, and **lean context**.
 
-## Quick Start (copy/paste)
+## Default posture
 
-1) **Full audit (safe, no changes):**
+This skill is **advisory first**.
+It should produce:
+- audit,
+- options,
+- recommended plan,
+- exact patch proposal,
+- rollback,
+- verification plan.
+
+No persistent mutations without explicit approval.
+
+## Quick start
+
+1) **Full audit (safe, no changes)**
 > Audit my OpenClaw setup for cost, reliability, and context bloat. Output a prioritized plan with rollback notes. Do NOT apply changes.
 
-2) **Context bloat / transcript noise:**
-> My OpenClaw context is bloating (slow replies / high cost / lots of transcript noise). Identify the top offenders (tools, crons, bootstrap files) and propose the smallest reversible fixes first. Do NOT apply changes.
+2) **Context bloat / transcript noise**
+> My OpenClaw context is bloating (slow replies / high cost / lots of transcript noise). Identify the top offenders (tools, crons, bootstrap files, skills) and propose the smallest reversible fixes first. Do NOT apply changes.
 
-3) **Model routing / delegation posture:**
+3) **Model routing / delegation posture**
 > Propose a model routing plan for (a) coding/engineering, (b) short notifications/reminders, (c) reasoning-heavy research/writing. Include an exact config patch + rollback plan, but do NOT apply changes.
 
-## What you will get
+## What good output looks like
 
-- **Executive summary** (what matters + why)
-- **Top offenders / drivers**
-  - cost drivers
-  - context drivers
-  - reliability risks
-- **Options A/B/C** (tradeoffs made explicit)
-- **Recommended plan** (smallest change first)
-- **Exact change proposals** (patch snippets) + **rollback**
+- **Executive summary**
+- **Top drivers**
+  - cost
+  - context
+  - reliability
+  - operator friction
+- **Options A/B/C** with tradeoffs
+- **Recommended plan** (smallest safe change first)
+- **Exact proposals** + **rollback** + **verify**
 
-## Safety Contract (must follow)
+## Safety contract
 
-- Treat this skill as **advisory by default**, not autonomous control-plane mutation.
-- Do not mutate persistent settings (e.g., config patch/apply) without explicit user approval.
-- Do not create/update/remove cron jobs without explicit user approval.
-- If an optimization reduces monitoring coverage, present options (A/B/C) and require the user to choose.
-- Before any approved persistent change, show: (1) exact change, (2) expected impact, (3) rollback plan.
+- Do not mutate persistent settings without explicit approval.
+- Do not create/update/remove cron jobs without explicit approval.
+- If an optimization reduces monitoring coverage, present options and require choice.
+- Before any approved change, show:
+  1. exact change,
+  2. expected impact,
+  3. rollback plan,
+  4. post-change verification.
 
-## Notes (skills + context)
-
-- Some runtimes snapshot skills per session. If you install/update skills and don't see changes, start a new session.
-- Prefer short `SKILL.md` + `references/` for long runbooks.
-
-## High-ROI optimization levers (typical wins)
+## High-ROI optimization levers
 
 ### 1) Output discipline for automation
+Make maintenance loops truly silent on success.
 
-Make maintenance loops **truly silent on success**.
+### 2) Separate work from notification
+If you want alerts but want interactive context lean:
+- do the work quietly
+- notify out-of-band with a short human receipt
 
-If your runtime supports the OpenClaw sentinel `NO_REPLY`, emit exactly `NO_REPLY` on success. Otherwise, print nothing on success.
+### 3) Bootstrap discipline
+Keep always-injected files short and load-bearing only.
+Move long runbooks into `references/` or adjacent notes.
 
-### 2) Separate "do the work" from "notify the human"
+### 4) Ambient specialist surface reduction
+A common hidden tax is **too many always-visible specialist skills**.
+If a workflow is low-frequency or specialist:
+- prefer on-demand worker/subagent usage,
+- do not keep it permanently ambient in main-chat prompt surface.
 
-If you want alerts but want the interactive session lean:
-- send a short out-of-band alert (Telegram/Slack/etc.)
-- then keep the job output silent
+### 5) Measure optimizations authoritatively
+Prefer fresh-session `/context json` or equivalent receipts over “feels better”.
+High-signal fields include:
+- `eligible skills`
+- `skills.promptChars`
+- `projectContextChars`
+- `systemPrompt.chars`
+- `promptTokens`
 
-### 3) Prefer isolated runs for unattended work
-
-If a job should execute *without* requiring attention, prefer isolated/background execution (exact config varies by runtime).
-
-### 4) Hardening & guardrails
-
-- Use scripts-first for complex cron jobs (avoid fragile multi-line shell quoting).
-- Add circuit breakers / global locks for heavy jobs.
-
-### 5) Ops hygiene checklist
-
-- Snapshot backups: freshness threshold + retention + failure markers.
-- Heartbeat coverage: check model auth, disk/snapshot freshness.
-- If you rely on ClawHub publishing/installs: check ClawHub auth (for example `npx clawhub whoami`).
+### 6) Verification-first ops hygiene
+After any approved optimization, verify:
+- core chat still works
+- recall/behavior did not degrade
+- new session actually picks up the change
+- rollback path is proven, not theoretical
 
 ## Workflow (concise)
 
-1. Audit rules + memory: ensure rules are modular/short; memory keeps only restart-critical facts.
-2. Model routing: confirm tiered routing (light / mid / deep) matches live config.
-3. Context discipline: apply progressive disclosure; move large static data to references/scripts.
-   - If transcripts are bloating, run `context-clean-up` (audit-only).
-4. Delegation protocol: parallelize independent tasks; use isolated workers for long/noisy work.
-5. Heartbeat optimization (control-plane only): propose options A/B/C (coverage vs cost).
-6. Execution gate: if user approves changes, apply the smallest viable change first, then verify and report.
+1. Audit rules + memory: keep restart-critical facts only.
+2. Audit skill surface: trim ambient specialists before touching tool surface.
+3. Audit transcripts/noise: silence cron and heartbeat success paths.
+4. Audit model routing and delegation posture.
+5. Recommend the smallest viable change first.
+6. Verify on a **new session** when skill/bootstrap snapshotting exists.
+
+## Notes
+
+- Some runtimes snapshot skills/config per session. If you install/update skills and do not see changes, start a new session.
+- Prefer short `SKILL.md` + `references/` for long runbooks.
+- If context bloat is the main complaint, pair this skill with `context-clean-up` (audit-only).
 
 ## References
 
