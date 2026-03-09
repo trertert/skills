@@ -1,0 +1,11 @@
+{
+  "owner": "nttylock",
+  "slug": "citedy-content-ingestion",
+  "displayName": "Clawhub Skill Content Ingestion",
+  "latest": {
+    "version": "1.0.0",
+    "publishedAt": 1773020841029,
+    "commit": null
+  },
+  "history": []
+}
